@@ -4,6 +4,7 @@ import Header from '../components/layout/Header';
 import { AnimatePresence } from 'framer-motion';
 import Hero from '../components/Hero';
 import MovieGrid from '../components/MovieGrid';
+import Footer from '@/components/layout/Footer';
 
 export default function App({ Component, pageProps, router }: AppProps) {
   return (
@@ -14,7 +15,6 @@ export default function App({ Component, pageProps, router }: AppProps) {
         style={{ minHeight: '100vh', minWidth: '100%' }}
       >
         <AnimatePresence mode="wait" initial={false}>
-          {/* render Hero + grid na raiz (ajuste se preferir apenas na page /) */}
           <div
             style={{
               maxWidth: 1200,
@@ -26,10 +26,10 @@ export default function App({ Component, pageProps, router }: AppProps) {
             <Hero />
             <MovieGrid />
           </div>
-
           <Component {...pageProps} key={router.route} />
         </AnimatePresence>
       </main>
+      <Footer />
     </>
   );
 }
