@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useParams } from 'react-router-dom';
 import { fetchMovieDetails } from '../api/tmdb';
 import { Movie } from '../types';
 
 export default function Details() {
-  const router = useRouter();
-  const { id } = router.query;
+  const { id } = useParams<{ id: string }>();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +16,7 @@ export default function Details() {
         setMovie(data);
       } catch (err) {
         setError('Failed to fetch movie details');
+        console.error(err);       
       } finally {
         setLoading(false);
       }
