@@ -2,8 +2,6 @@ import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import Header from '../components/layout/Header';
 import { AnimatePresence } from 'framer-motion';
-import Hero from '../components/Hero';
-import MovieGrid from '../components/MovieGrid';
 import Footer from '@/components/layout/Footer';
 
 export default function App({ Component, pageProps, router }: AppProps) {
@@ -15,17 +13,6 @@ export default function App({ Component, pageProps, router }: AppProps) {
         style={{ minHeight: '100vh', minWidth: '100%' }}
       >
         <AnimatePresence mode="wait" initial={false}>
-          <div
-            style={{
-              maxWidth: 1200,
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              padding: 24,
-            }}
-          >
-            <Hero />
-            <MovieGrid />
-          </div>
           <Component {...pageProps} key={router.route} />
         </AnimatePresence>
       </main>

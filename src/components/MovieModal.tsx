@@ -5,51 +5,49 @@ import { useModalStore } from '../store/modalStore';
 import { fetchMovieDetails, getImageUrl } from '../api/tmdb';
 import useFavoritesStore from '../store/favoritesStore';
 
-interface Genre {
-  id: number;
-  name: string;
-}
-
-interface Cast {
-  id: number;
-  name: string;
-}
-
+interface Genre { id: number; name: string; }
 interface MovieDetails {
   id: number;
   title?: string;
   name?: string;
-  overview: string;
-  poster_path: string;
+  overview?: string;
+  poster_path?: string;
   backdrop_path?: string;
   tagline?: string;
-  vote_average: number;
+  vote_average?: number;
   release_date?: string;
   first_air_date?: string;
-  genres: Genre[];
+  genres?: Genre[];
   runtime?: number;
   episode_run_time?: number[];
   status?: string;
-  credits?: {
-    cast: Cast[];
-  };
+  credits?: { cast?: unknown[] };
 }
- 
+
 export default function MovieModal() {
   const { isOpen, selectedId, type, closeModal } = useModalStore();
   const [details, setDetails] = useState<MovieDetails | null>(null);
-  const { addFavorite } = useFavoritesStore();
+  const addFavorite = useFavoritesStore((s: { addFavorite: (movie: { id: number; title: string; overview: string; poster_path: string; release_date: string; vote_average: number; genre_ids: number[] }) => void }) => s.addFavorite);
+  const removeFavorite = useFavoritesStore((s: { removeFavorite: (id: number) => void }) => s.removeFavorite);
+  const favorites = useFavoritesStore((s: { favorites: { id: number }[] }) => s.favorites);
+  const isFav = (id?: number) => favorites.some((fav: { id: number }) => fav.id === id);
 
   useEffect(() => {
     if (!isOpen || !selectedId) return;
     let mounted = true;
     fetchMovieDetails(selectedId, type)
-      .then((d) => mounted && setDetails(d))
-      .catch(() => mounted && setDetails(null));
+      .then((d) => {
+        if (mounted) setDetails(d);
+      })
+      .catch(() => {
+        if (mounted) setDetails(null);
+      });
     return () => {
       mounted = false;
     };
   }, [isOpen, selectedId, type]);
+
+
 
   if (!isOpen) return null;
 
@@ -86,13 +84,20 @@ export default function MovieModal() {
             overflow: 'hidden',
             background: '#0b1220',
             color: '#e6eef8',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '80vh',
           }}
         >
           {/* Backdrop hero */}
-          <div style={{ position: 'relative', height: 320, backgroundColor: '#000' }}>
+          <div style={{ position: 'relative', height: 320, backgroundColor: '#000', flexShrink: 0 }}>
             {backdrop ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={getImageUrl(backdrop, 'w1280')} alt={details?.title || details?.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img
+                src={getImageUrl(backdrop, 'w1280')}
+                alt={details?.title || details?.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
             ) : (
               <div style={{ width: '100%', height: '100%', background: '#071226' }} />
             )}
@@ -113,24 +118,24 @@ export default function MovieModal() {
               </div>
 
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                {/* botão favoritos com proteção caso details seja null */}
                 <button
                   onClick={() => {
                     if (!details) return;
-                    const favoriteItem = {
-                      id: details.id,
-                      title: details.title || details.name || '',
-                      overview: details.overview,
-                      poster_path: details.poster_path,
-                      release_date: details.release_date || details.first_air_date || '',
-                      vote_average: details.vote_average,
-                      genre_ids: details.genres.map(g => g.id)
-                    };
-                    addFavorite(favoriteItem);
+                    if (isFav(details.id)) removeFavorite(details.id);
+                    else
+                      addFavorite({
+                        id: details.id,
+                        title: details.title || details.name || '',
+                        overview: details.overview || '',
+                        poster_path: details.poster_path || details.backdrop_path || '',
+                        release_date: details.release_date || details.first_air_date || '',
+                        vote_average: details.vote_average || 0,
+                        genre_ids: details.genres?.map(g => g.id) || [],
+                      });
                   }}
                   style={{
                     padding: '10px 14px',
-                    background: 'rgba(255,255,255,0.06)',
+                    background: isFav(details?.id) ? '#ef4444' : 'rgba(255,255,255,0.06)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -138,7 +143,7 @@ export default function MovieModal() {
                     fontWeight: 700,
                   }}
                 >
-                  + Favoritos
+                  {isFav(details?.id) ? 'Remover' : '+ Favoritos'}
                 </button>
 
                 <button
@@ -158,8 +163,8 @@ export default function MovieModal() {
             </div>
           </div>
 
-          {/* details area */}
-          <div style={{ display: 'flex', gap: 20, padding: 24 }}>
+          {/* details area: scrollable when content exceeds modal height */}
+          <div style={{ display: 'flex', gap: 20, padding: 24, overflow: 'hidden', flex: 1 }}>
             <div style={{ width: 220, flexShrink: 0 }}>
               {details?.poster_path ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -169,16 +174,15 @@ export default function MovieModal() {
               )}
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
               <div style={{ color: '#94a3b8', marginBottom: 12 }}>
-                {(details?.genres || []).map((g: Genre) => g.name).join(' • ')} • {details?.runtime ?? details?.episode_run_time?.[0] ?? '—'} min
+                {(details?.genres || []).map((g) => g.name).join(' • ')} • {details?.runtime ?? details?.episode_run_time?.[0] ?? '—'} min
               </div>
 
               <p style={{ color: '#cbd5e1', lineHeight: 1.6 }}>{details?.overview}</p>
 
               <div style={{ marginTop: 16, color: '#94a3b8' }}>
-                <div>Elenco: {(details?.credits?.cast || []).slice(0, 5).map((c: Cast) => c.name).join(', ')}</div>
-                <div style={{ marginTop: 8 }}>Lançamento: {details?.release_date || details?.first_air_date || '—'}</div>
+                <div>Lançamento: {details?.release_date || details?.first_air_date || '—'}</div>
                 <div style={{ marginTop: 8 }}>Status: {details?.status || '—'}</div>
               </div>
             </div>

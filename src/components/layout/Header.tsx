@@ -7,7 +7,7 @@ const navItems = [
   { href: '/', label: 'Início' },
   { href: '/movies', label: 'Filmes' },
   { href: '/series', label: 'Séries' },
-  { href: '/trending', label: 'Tendências' },
+  { href: '/animes', label: 'Animes' }, // substituído Tendências -> Animes
   { href: '/search', label: 'Buscar' },
   { href: '/favorites', label: 'Favoritos' },
 ];
@@ -92,7 +92,11 @@ export default function Header() {
           {/* mobile actions */}
           <div className="mobile-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
-              onClick={() => router.push('/search')}
+              onClick={() => {
+                if (router.pathname !== '/search') {
+                  router.push('/search');
+                }
+              }}
               aria-label="Abrir busca"
               style={{
                 width: 40,
