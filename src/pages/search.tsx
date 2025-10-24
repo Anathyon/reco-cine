@@ -20,7 +20,7 @@ export default function SearchPage() {
       setError(null);
       const data = await fetchMovies(params.query);
       setResults(data.results || []);
-    } catch (err) {
+    } catch {
       setError('Erro ao buscar');
     } finally {
       setLoading(false);

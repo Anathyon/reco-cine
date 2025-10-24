@@ -14,7 +14,7 @@ export default function FavoritesPage() {
 
   const filteredFavorites = filter === 'all' ? favorites : favorites.filter(item => item.type === filter);
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: { id: number; type: string }) => {
     if (item.type === 'anime') {
       setSelectedAnimeId(item.id);
       setIsAnimeModalOpen(true);
@@ -23,7 +23,7 @@ export default function FavoritesPage() {
     }
   };
 
-  const renderItem = (item: any) => {
+  const renderItem = (item: { id: number; type: string; poster_path?: string; title: string; vote_average?: number }) => {
     if (item.type === 'anime') {
       return (
         <div 
