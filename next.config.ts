@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
+  outputFileTracingRoot: __dirname,
   async headers() {
     return [
       {

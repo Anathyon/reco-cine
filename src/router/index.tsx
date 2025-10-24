@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from '../pages/Home';
-import Movies from '../pages/Movies';
-import Series from '../pages/Series';
+import Movies from '../pages/movies';
+import Series from '../pages/series';
 import Details from '../pages/Details';
-import Favorites from '../pages/Favorites';
+import Favorites from '../pages/favorites';
 
 const AppRouter = () => {
   return (

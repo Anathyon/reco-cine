@@ -5,6 +5,17 @@ import MovieModal from '../components/MovieModal';
 import AnimeModal from '../components/AnimeModal';
 import { useModalStore } from '../store/modalStore';
 
+interface FavoriteItem {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string;
+  release_date: string;
+  vote_average: number;
+  genre_ids: number[];
+  type: 'movie' | 'tv' | 'anime';
+}
+
 export default function FavoritesPage() {
   const { favorites } = useFavoritesStore();
   const { openModal } = useModalStore();
@@ -12,9 +23,9 @@ export default function FavoritesPage() {
   const [isAnimeModalOpen, setIsAnimeModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv' | 'anime'>('all');
 
-  const filteredFavorites = filter === 'all' ? favorites : favorites.filter(item => item.type === filter);
+  const filteredFavorites = filter === 'all' ? favorites : favorites.filter((item: FavoriteItem) => item.type === filter);
 
-  const handleItemClick = (item: { id: number; type: string }) => {
+  const handleItemClick = (item: FavoriteItem) => {
     if (item.type === 'anime') {
       setSelectedAnimeId(item.id);
       setIsAnimeModalOpen(true);
@@ -23,7 +34,7 @@ export default function FavoritesPage() {
     }
   };
 
-  const renderItem = (item: { id: number; type: string; poster_path?: string; title: string; vote_average?: number }) => {
+  const renderItem = (item: FavoriteItem) => {
     if (item.type === 'anime') {
       return (
         <div 
@@ -82,7 +93,7 @@ export default function FavoritesPage() {
           {[{key: 'all', label: 'Todos'}, {key: 'movie', label: 'Filmes'}, {key: 'tv', label: 'Séries'}, {key: 'anime', label: 'Animes'}].map(({key, label}) => (
             <button
               key={key}
-              onClick={() => setFilter(key as any)}
+              onClick={() => setFilter(key as 'all' | 'movie' | 'tv' | 'anime')}
               style={{
                 padding: '6px 12px',
                 background: filter === key ? '#3b82f6' : 'rgba(255,255,255,0.06)',
@@ -93,7 +104,7 @@ export default function FavoritesPage() {
                 fontSize: '12px'
               }}
             >
-              {label} ({key === 'all' ? favorites.length : favorites.filter(item => item.type === key).length})
+              {label} ({key === 'all' ? favorites.length : favorites.filter((item: FavoriteItem) => item.type === key).length})
             </button>
           ))}
         </div>
