@@ -3,8 +3,24 @@ import type { AppProps } from 'next/app';
 import Header from '../components/layout/Header';
 import { AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
+import InstallPWA from '../components/InstallPWA';
+import { useEffect } from 'react';
 
 export default function App({ Component, pageProps, router }: AppProps) {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  }, []);
+
   return (
     <>
       <Header />
@@ -17,6 +33,7 @@ export default function App({ Component, pageProps, router }: AppProps) {
         </AnimatePresence>
       </main>
       <Footer />
+      <InstallPWA />
     </>
   );
 }

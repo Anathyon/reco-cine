@@ -27,10 +27,7 @@ interface MovieDetails {
 export default function MovieModal() {
   const { isOpen, selectedId, type, closeModal } = useModalStore();
   const [details, setDetails] = useState<MovieDetails | null>(null);
-  const addFavorite = useFavoritesStore((s: { addFavorite: (movie: { id: number; title: string; overview: string; poster_path: string; release_date: string; vote_average: number; genre_ids: number[] }) => void }) => s.addFavorite);
-  const removeFavorite = useFavoritesStore((s: { removeFavorite: (id: number) => void }) => s.removeFavorite);
-  const favorites = useFavoritesStore((s: { favorites: { id: number }[] }) => s.favorites);
-  const isFav = (id?: number) => favorites.some((fav: { id: number }) => fav.id === id);
+  const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore();
 
   useEffect(() => {
     if (!isOpen || !selectedId) return;
@@ -121,7 +118,7 @@ export default function MovieModal() {
                 <button
                   onClick={() => {
                     if (!details) return;
-                    if (isFav(details.id)) removeFavorite(details.id);
+                    if (isFavorite(details.id)) removeFavorite(details.id);
                     else
                       addFavorite({
                         id: details.id,
@@ -131,11 +128,12 @@ export default function MovieModal() {
                         release_date: details.release_date || details.first_air_date || '',
                         vote_average: details.vote_average || 0,
                         genre_ids: details.genres?.map(g => g.id) || [],
+                        type: type as 'movie' | 'tv',
                       });
                   }}
                   style={{
                     padding: '10px 14px',
-                    background: isFav(details?.id) ? '#ef4444' : 'rgba(255,255,255,0.06)',
+                    background: isFavorite(details?.id || 0) ? '#ef4444' : 'rgba(255,255,255,0.06)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -143,7 +141,7 @@ export default function MovieModal() {
                     fontWeight: 700,
                   }}
                 >
-                  {isFav(details?.id) ? 'Remover' : '+ Favoritos'}
+                  {isFavorite(details?.id || 0) ? 'Remover' : '+ Favoritos'}
                 </button>
 
                 <button

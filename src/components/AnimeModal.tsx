@@ -38,10 +38,7 @@ interface AnimeModalProps {
 export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps) {
   const [details, setDetails] = useState<AnimeDetails | null>(null);
   const [loading, setLoading] = useState(false);
-  const addFavorite = useFavoritesStore((s) => s.addFavorite);
-  const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
-  const favorites = useFavoritesStore((s) => s.favorites);
-  const isFav = (id?: number) => favorites.some((fav) => fav.id === id);
+  const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore();
 
   useEffect(() => {
     if (!isOpen || !animeId) return;
@@ -148,7 +145,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                     <button
                       onClick={() => {
                         if (!details) return;
-                        if (isFav(details.mal_id)) removeFavorite(details.mal_id);
+                        if (isFavorite(details.mal_id)) removeFavorite(details.mal_id);
                         else
                           addFavorite({
                             id: details.mal_id,
@@ -158,11 +155,12 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                             release_date: details.aired?.from || '',
                             vote_average: details.score || 0,
                             genre_ids: details.genres?.map((g, i) => i) || [],
+                            type: 'anime',
                           });
                       }}
                       style={{
                         padding: '10px 14px',
-                        background: isFav(details?.mal_id) ? '#ef4444' : 'rgba(255,255,255,0.06)',
+                        background: isFavorite(details?.mal_id || 0) ? '#ef4444' : 'rgba(255,255,255,0.06)',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '8px',
@@ -170,7 +168,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                         fontWeight: 700,
                       }}
                     >
-                      {isFav(details?.mal_id) ? 'Remover' : '+ Favoritos'}
+                      {isFavorite(details?.mal_id || 0) ? 'Remover' : '+ Favoritos'}
                     </button>
                     <button
                       onClick={onClose}

@@ -1,4 +1,3 @@
-// filepath: c:\Users\ANATHYON ERYSSON\Downloads\Reconmendações-cine\reco-cine\src\store\modalStore.ts
 import { create } from 'zustand';
 
 type ModalState = {
