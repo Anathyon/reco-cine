@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from '../pages/Home';
-import Movies from '../pages/movies';
-import Series from '../pages/series';
+import Movies from '../pages/Movies';
+import Series from '../pages/Series';
 import Details from '../pages/Details';
-import Favorites from '../pages/favorites';
+import Favorites from '../pages/Favorites';
 
 const AppRouter: React.FC = () => {
   return (
