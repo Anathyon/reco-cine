@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from '../pages/Home';
 import Movies from '../pages/movies';
@@ -5,7 +6,7 @@ import Series from '../pages/series';
 import Details from '../pages/Details';
 import Favorites from '../pages/favorites';
 
-const AppRouter = () => {
+const AppRouter: React.FC = () => {
   return (
     <Router>
       <Routes>
