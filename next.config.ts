@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   trailingSlash: false,
   outputFileTracingRoot: __dirname,
   output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: __dirname,
-  },
   async headers() {
     return [
       {
