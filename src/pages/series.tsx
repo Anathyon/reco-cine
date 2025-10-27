@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Movie } from '../types';
 import { fetchMovies } from '../api/tmdb';
 import MovieCard from '../components/MovieCard';
@@ -58,7 +58,7 @@ export default function SeriesPage() {
     loadSeries();
   }, []);
 
-  const handleGenreChange = (genreId: number) => {
+  const handleGenreChange = useCallback((genreId: number) => {
     setSelectedGenre(genreId);
     if (genreId === 0) {
       setRecommendations(shuffle(allSeries));
@@ -66,16 +66,20 @@ export default function SeriesPage() {
       const filtered = allSeries.filter(series => series.genre_ids?.includes(genreId));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allSeries]);
 
-  const refreshRecommendations = () => {
+  const refreshRecommendations = useCallback(() => {
     if (selectedGenre === 0) {
       setRecommendations(shuffle(allSeries));
     } else {
       const filtered = allSeries.filter(series => series.genre_ids?.includes(selectedGenre));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allSeries, selectedGenre]);
+
+  const handleSeriesClick = useCallback((seriesId: number) => {
+    openModal(seriesId, 'tv');
+  }, [openModal]);
 
   if (loading) return <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>Carregando...</div>;
   if (error) return <div style={{ padding: '48px', textAlign: 'center', color: 'salmon' }}>{error}</div>;
@@ -151,7 +155,7 @@ export default function SeriesPage() {
               key={series.id} 
               item={series} 
               type="tv" 
-              onClick={() => openModal(series.id, 'tv')} 
+              onClick={() => handleSeriesClick(series.id)} 
             />
           ))}
         </div>
@@ -169,7 +173,7 @@ export default function SeriesPage() {
               key={series.id} 
               item={series} 
               type="tv" 
-              onClick={() => openModal(series.id, 'tv')} 
+              onClick={() => handleSeriesClick(series.id)} 
             />
           ))}
         </div>

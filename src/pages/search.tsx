@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import MovieCard from '../components/MovieCard';
 import { useModalStore } from '../store/modalStore';
+import { useDebounce } from '../hooks/useDebounce';
 
 type ResultItem = {
   id: number;
@@ -21,6 +22,7 @@ export default function SearchPage(): React.JSX.Element {
   const [animeModalOpen, setAnimeModalOpen] = useState(false);
   const [selectedAnime, setSelectedAnime] = useState<ResultItem | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const debouncedQuery = useDebounce(query, 500);
   const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 
   useEffect(() => {
@@ -33,13 +35,15 @@ export default function SearchPage(): React.JSX.Element {
   // <-- get function reference directly to avoid selector object identity changes
   const openModal = useModalStore((s) => s.openModal);
 
-  async function handleSearch(e?: React.FormEvent) {
-    if (e) e.preventDefault();
-    if (!query.trim()) return;
+  const performSearch = useCallback(async () => {
+    if (!debouncedQuery.trim()) {
+      setResults([]);
+      return;
+    }
     setLoading(true);
     try {
       if (type === 'anime') {
-        const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=30`);
+        const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(debouncedQuery)}&limit=30`);
         const json = await res.json();
         const items: ResultItem[] = (json.data || []).map((a: any) => ({
           id: a.mal_id,
@@ -51,7 +55,7 @@ export default function SearchPage(): React.JSX.Element {
         setResults(items);
       } else {
         if (!TMDB_KEY) throw new Error('TMDB API key not configured (NEXT_PUBLIC_TMDB_API_KEY).');
-        const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&language=pt-BR&query=${encodeURIComponent(query)}&page=1`);
+        const res = await fetch(`https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_KEY}&language=pt-BR&query=${encodeURIComponent(debouncedQuery)}&page=1`);
         const json = await res.json();
         const items: ResultItem[] = (json.results || []).map((r: any) => ({
           id: r.id,
@@ -70,16 +74,29 @@ export default function SearchPage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }
+  }, [debouncedQuery, type, TMDB_KEY]);
 
-  function handleCardClick(item: ResultItem) {
+  const handleSearch = useCallback((e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    performSearch();
+  }, [performSearch]);
+
+  useEffect(() => {
+    if (debouncedQuery) {
+      performSearch();
+    }
+  }, [debouncedQuery, performSearch]);
+
+  const handleCardClick = useCallback((item: ResultItem) => {
     if (item.type === 'anime') {
       setSelectedAnime(item);
       setAnimeModalOpen(true);
     } else {
       openModal(item.id, item.type === 'tv' ? 'tv' : 'movie');
     }
-  }
+  }, [openModal]);
+
+  const memoizedResults = useMemo(() => results, [results]);
 
   return (
     <>
@@ -152,7 +169,7 @@ export default function SearchPage(): React.JSX.Element {
               <div style={{ padding: '1.5rem', color: '#94a3b8' }}>Nenhum resultado</div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(10rem, 100%), 1fr))', gap: 'clamp(0.75rem, 2vw, 1rem)' }}>
-                {results.map((r) =>
+                {memoizedResults.map((r) =>
                   r.type === 'anime' ? (
                     <div
                       key={`anime-${r.id}`}

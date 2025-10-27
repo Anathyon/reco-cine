@@ -5,6 +5,15 @@ const nextConfig: NextConfig = {
   trailingSlash: false,
   outputFileTracingRoot: __dirname,
   output: 'standalone',
+  compress: true,
+  poweredByHeader: false,
+  images: {
+    domains: ['image.tmdb.org', 'cdn.myanimelist.net'],
+    formats: ['image/webp', 'image/avif'],
+  },
+  experimental: {
+    optimizeCss: true,
+  },
   async headers() {
     return [
       {
@@ -31,30 +40,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/movies',
-        destination: '/movies',
-      },
-      {
-        source: '/series', 
-        destination: '/series',
-      },
-      {
-        source: '/animes',
-        destination: '/animes', 
-      },
-      {
-        source: '/search',
-        destination: '/search',
-      },
-      {
-        source: '/favorites',
-        destination: '/favorites',
-      },
-    ];
-  },
+
 };
 
 export default nextConfig;

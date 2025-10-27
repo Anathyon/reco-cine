@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Movie } from '../types';
 import { fetchMovies } from '../api/tmdb';
 import MovieCard from '../components/MovieCard';
@@ -58,7 +58,7 @@ export default function MoviesPage() {
     loadMovies();
   }, []);
 
-  const handleGenreChange = (genreId: number) => {
+  const handleGenreChange = useCallback((genreId: number) => {
     setSelectedGenre(genreId);
     if (genreId === 0) {
       setRecommendations(shuffle(allMovies));
@@ -66,16 +66,20 @@ export default function MoviesPage() {
       const filtered = allMovies.filter(movie => movie.genre_ids?.includes(genreId));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allMovies]);
 
-  const refreshRecommendations = () => {
+  const refreshRecommendations = useCallback(() => {
     if (selectedGenre === 0) {
       setRecommendations(shuffle(allMovies));
     } else {
       const filtered = allMovies.filter(movie => movie.genre_ids?.includes(selectedGenre));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allMovies, selectedGenre]);
+
+  const handleMovieClick = useCallback((movieId: number) => {
+    openModal(movieId, 'movie');
+  }, [openModal]);
 
   if (loading) return <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>Carregando...</div>;
   if (error) return <div style={{ padding: '48px', textAlign: 'center', color: 'salmon' }}>{error}</div>;

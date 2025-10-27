@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import useFavoritesStore from '../store/favoritesStore';
 import MovieCard from '../components/MovieCard';
 import MovieModal from '../components/MovieModal';
@@ -23,16 +23,19 @@ export default function FavoritesPage() {
   const [isAnimeModalOpen, setIsAnimeModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'movie' | 'tv' | 'anime'>('all');
 
-  const filteredFavorites = filter === 'all' ? favorites : favorites.filter((item: FavoriteItem) => item.type === filter);
+  const filteredFavorites = useMemo(() => 
+    filter === 'all' ? favorites : favorites.filter((item: FavoriteItem) => item.type === filter),
+    [favorites, filter]
+  );
 
-  const handleItemClick = (item: FavoriteItem) => {
+  const handleItemClick = useCallback((item: FavoriteItem) => {
     if (item.type === 'anime') {
       setSelectedAnimeId(item.id);
       setIsAnimeModalOpen(true);
     } else {
       openModal(item.id, item.type === 'tv' ? 'tv' : 'movie');
     }
-  };
+  }, [openModal]);
 
   const renderItem = (item: FavoriteItem) => {
     if (item.type === 'anime') {

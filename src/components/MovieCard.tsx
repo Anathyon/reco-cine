@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Movie, Series } from '../types';
 import { getImageUrl } from '../api/tmdb';
 import { motion } from 'framer-motion';
@@ -9,7 +9,7 @@ type Props = {
   onClick?: () => void;
 };
 
-export default function MovieCard({ item, onClick }: Props) {
+const MovieCard = memo(function MovieCard({ item, onClick }: Props) {
   const poster = getImageUrl(item.poster_path || '', 'w342');
 
   return (
@@ -39,6 +39,8 @@ export default function MovieCard({ item, onClick }: Props) {
           <img 
             src={poster} 
             alt={'title' in item ? item.title : item.name} 
+            loading="lazy"
+            decoding="async"
             style={{ 
               width: '100%', 
               height: '100%', 
@@ -75,4 +77,6 @@ export default function MovieCard({ item, onClick }: Props) {
       </div>
     </motion.div>
   );
-}
+});
+
+export default MovieCard;
