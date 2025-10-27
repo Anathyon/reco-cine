@@ -1,4 +1,26 @@
 {
+  "rewrites": [
+    {
+      "source": "/movies",
+      "destination": "/movies"
+    },
+    {
+      "source": "/series",
+      "destination": "/series"
+    },
+    {
+      "source": "/animes",
+      "destination": "/animes"
+    },
+    {
+      "source": "/search",
+      "destination": "/search"
+    },
+    {
+      "source": "/favorites",
+      "destination": "/favorites"
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",
@@ -30,5 +52,6 @@
         }
       ]
     }
-  ]
+  ],
+  "trailingSlash": false
 }

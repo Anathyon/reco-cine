@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
   outputFileTracingRoot: __dirname,
+  output: 'standalone',
+  experimental: {
+    outputFileTracingRoot: __dirname,
+  },
   async headers() {
     return [
       {
@@ -27,6 +31,30 @@ const nextConfig: NextConfig = {
             value: 'application/manifest+json',
           },
         ],
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/movies',
+        destination: '/movies',
+      },
+      {
+        source: '/series', 
+        destination: '/series',
+      },
+      {
+        source: '/animes',
+        destination: '/animes', 
+      },
+      {
+        source: '/search',
+        destination: '/search',
+      },
+      {
+        source: '/favorites',
+        destination: '/favorites',
       },
     ];
   },
