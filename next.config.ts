@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
     domains: ['image.tmdb.org', 'cdn.myanimelist.net'],
     formats: ['image/webp', 'image/avif'],
   },
-  experimental: {
-    optimizeCss: true,
-  },
+
   async headers() {
     return [
       {

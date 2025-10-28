@@ -1,5 +1,6 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
+import Head from 'next/head';
 import Header from '../components/layout/Header';
 import { AnimatePresence } from 'framer-motion';
 import Footer from '@/components/layout/Footer';
@@ -23,6 +24,9 @@ export default function App({ Component, pageProps, router }: AppProps) {
 
   return (
     <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </Head>
       <Header />
       <main
         className="min-h-screen min-w-full bg-linear-to-b from-[#071226] to-[#0e1a28] text-slate-100"
