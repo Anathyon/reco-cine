@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AnimeModal from '../components/AnimeModal';
 
 interface AnimeItem {
@@ -41,6 +41,14 @@ export default function AnimesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAnimeId, setSelectedAnimeId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const loadAnimes = async () => {
@@ -61,7 +69,7 @@ export default function AnimesPage() {
     loadAnimes();
   }, []);
 
-  const handleGenreChange = (genreId: number) => {
+  const handleGenreChange = useCallback((genreId: number) => {
     setSelectedGenre(genreId);
     if (genreId === 0) {
       setRecommendations(shuffle(allAnimes));
@@ -71,9 +79,9 @@ export default function AnimesPage() {
       );
       setRecommendations(shuffle(filtered.length > 0 ? filtered : allAnimes));
     }
-  };
+  }, [allAnimes]);
 
-  const refreshRecommendations = () => {
+  const refreshRecommendations = useCallback(() => {
     if (selectedGenre === 0) {
       setRecommendations(shuffle(allAnimes));
     } else {
@@ -82,34 +90,56 @@ export default function AnimesPage() {
       );
       setRecommendations(shuffle(filtered.length > 0 ? filtered : allAnimes));
     }
-  };
+  }, [allAnimes, selectedGenre]);
 
-  const openAnimeModal = (animeId: number) => {
+  const openAnimeModal = useCallback((animeId: number) => {
     setSelectedAnimeId(animeId);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  if (loading) return <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>Carregando...</div>;
-  if (error) return <div style={{ padding: '48px', textAlign: 'center', color: 'salmon' }}>{error}</div>;
+  if (loading) return <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>Carregando...</div>;
+  if (error) return <div style={{ padding: '3rem', textAlign: 'center', color: 'salmon' }}>{error}</div>;
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1rem' }}>
       <AnimeModal 
         isOpen={isModalOpen} 
         animeId={selectedAnimeId} 
         onClose={() => setIsModalOpen(false)} 
       />
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: '1rem',
+        marginBottom: '1.5rem' 
+      }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Animes</h1>
-          <p style={{ color: '#94a3b8', marginTop: '6px' }}>Tendências e recomendações</p>
+          <h1 style={{ fontSize: '1.375rem', fontWeight: 700, margin: 0 }}>Animes</h1>
+          <p style={{ color: '#94a3b8', marginTop: '0.375rem' }}>Tendências e recomendações</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          width: isMobile ? '100%' : 'auto'
+        }}>
           <select 
             value={selectedGenre} 
             onChange={(e) => handleGenreChange(Number(e.target.value))}
-            style={{ padding: '8px 10px', background: '#071226', color: '#e6eef8', borderRadius: '6px', border: '1px solid #122032' }}
+            style={{ 
+              padding: '0.5rem 0.625rem', 
+              background: '#071226', 
+              color: '#e6eef8', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #122032',
+              fontSize: '0.875rem',
+              minWidth: '7rem',
+              flex: isMobile ? '1' : 'none'
+            }}
           >
             {GENRES.map(genre => (
               <option key={genre.id} value={genre.id}>{genre.name}</option>
@@ -117,41 +147,63 @@ export default function AnimesPage() {
           </select>
           <button 
             onClick={refreshRecommendations}
-            style={{ padding: '8px 12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+            style={{ 
+              padding: '0.5rem 0.75rem', 
+              background: '#3b82f6', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '0.375rem', 
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              whiteSpace: 'nowrap'
+            }}
           >
             Aleatório
           </button>
         </div>
       </div>
 
-      <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0' }}>Tendências</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+      <section style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1rem 0' }}>Tendências</h2>
+        <div style={{ 
+          display: isMobile ? 'flex' : 'grid',
+          gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(10rem, 1fr))',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? '0.75rem' : '1rem',
+          paddingBottom: isMobile ? '0.5rem' : '0',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
           {trending.map(anime => (
-            <div 
-              key={anime.mal_id}
-              style={{ background: '#0f1724', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' }}
-              onClick={() => openAnimeModal(anime.mal_id)}
-            >
-              <div style={{ height: '270px', background: '#0b1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {anime.images?.jpg?.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img 
-                    src={anime.images.jpg.image_url} 
-                    alt={anime.title} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div style={{ color: '#94a3b8' }}>Sem imagem</div>
-                )}
-              </div>
-              <div style={{ padding: '12px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#e6eef8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {anime.title}
-                </h3>
-                <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>
-                  {anime.score ? `⭐ ${anime.score}` : 'Sem nota'}
-                </p>
+            <div key={anime.mal_id} style={{ 
+              minWidth: isMobile ? '7.5rem' : 'auto',
+              width: isMobile ? '7.5rem' : 'auto'
+            }}>
+              <div 
+                style={{ background: '#0f1724', borderRadius: '0.5rem', overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => openAnimeModal(anime.mal_id)}
+              >
+                <div style={{ height: isMobile ? '10rem' : '16.875rem', background: '#0b1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {anime.images?.jpg?.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
+                      src={anime.images.jpg.image_url} 
+                      alt={anime.title} 
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div style={{ color: '#94a3b8' }}>Sem imagem</div>
+                  )}
+                </div>
+                <div style={{ padding: '0.75rem' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e6eef8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {anime.title}
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>
+                    {anime.score ? `⭐ ${anime.score}` : 'Sem nota'}
+                  </p>
+                </div>
               </div>
             </div>
           ))}
@@ -159,33 +211,46 @@ export default function AnimesPage() {
       </section>
 
       <section>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0' }}>Recomendações</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1rem 0' }}>Recomendações</h2>
+        <div style={{ 
+          display: isMobile ? 'flex' : 'grid',
+          gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(10rem, 1fr))',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? '0.75rem' : '1rem',
+          paddingBottom: isMobile ? '0.5rem' : '0',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
           {recommendations.map(anime => (
-            <div 
-              key={anime.mal_id}
-              style={{ background: '#0f1724', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' }}
-              onClick={() => openAnimeModal(anime.mal_id)}
-            >
-              <div style={{ height: '270px', background: '#0b1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {anime.images?.jpg?.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img 
-                    src={anime.images.jpg.image_url} 
-                    alt={anime.title} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-                ) : (
-                  <div style={{ color: '#94a3b8' }}>Sem imagem</div>
-                )}
-              </div>
-              <div style={{ padding: '12px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#e6eef8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {anime.title}
-                </h3>
-                <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>
-                  {anime.score ? `⭐ ${anime.score}` : 'Sem nota'}
-                </p>
+            <div key={anime.mal_id} style={{ 
+              minWidth: isMobile ? '7.5rem' : 'auto',
+              width: isMobile ? '7.5rem' : 'auto'
+            }}>
+              <div 
+                style={{ background: '#0f1724', borderRadius: '0.5rem', overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => openAnimeModal(anime.mal_id)}
+              >
+                <div style={{ height: isMobile ? '10rem' : '16.875rem', background: '#0b1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {anime.images?.jpg?.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
+                      src={anime.images.jpg.image_url} 
+                      alt={anime.title} 
+                      loading="lazy"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    <div style={{ color: '#94a3b8' }}>Sem imagem</div>
+                  )}
+                </div>
+                <div style={{ padding: '0.75rem' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#e6eef8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {anime.title}
+                  </h3>
+                  <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.375rem' }}>
+                    {anime.score ? `⭐ ${anime.score}` : 'Sem nota'}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

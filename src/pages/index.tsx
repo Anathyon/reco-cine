@@ -19,7 +19,7 @@ export default function Home() {
       <Head>
         <title>CineExplorer - Discover Movies and Series</title>
       </Head>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+      <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1.5rem' }}>
         <Hero />
         <MovieGrid />
         {/* seção de animes (preview) */}

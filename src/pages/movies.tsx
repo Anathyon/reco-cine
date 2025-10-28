@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Movie } from '../types';
 import { fetchMovies } from '../api/tmdb';
 import MovieCard from '../components/MovieCard';
@@ -30,7 +30,15 @@ export default function MoviesPage() {
   const [selectedGenre, setSelectedGenre] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { openModal } = useModalStore();
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const loadMovies = async () => {
@@ -50,7 +58,7 @@ export default function MoviesPage() {
     loadMovies();
   }, []);
 
-  const handleGenreChange = (genreId: number) => {
+  const handleGenreChange = useCallback((genreId: number) => {
     setSelectedGenre(genreId);
     if (genreId === 0) {
       setRecommendations(shuffle(allMovies));
@@ -58,34 +66,60 @@ export default function MoviesPage() {
       const filtered = allMovies.filter(movie => movie.genre_ids?.includes(genreId));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allMovies]);
 
-  const refreshRecommendations = () => {
+  const refreshRecommendations = useCallback(() => {
     if (selectedGenre === 0) {
       setRecommendations(shuffle(allMovies));
     } else {
       const filtered = allMovies.filter(movie => movie.genre_ids?.includes(selectedGenre));
       setRecommendations(shuffle(filtered));
     }
-  };
+  }, [allMovies, selectedGenre]);
+
+  const handleMovieClick = useCallback((movieId: number) => {
+    openModal(movieId, 'movie');
+  }, [openModal]);
 
   if (loading) return <div style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>Carregando...</div>;
   if (error) return <div style={{ padding: '48px', textAlign: 'center', color: 'salmon' }}>{error}</div>;
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div style={{ maxWidth: '75rem', margin: '0 auto', padding: 'clamp(1rem, 3vw, 1.5rem)' }}>
       <MovieModal />
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: '1rem',
+        marginBottom: 'clamp(1rem, 3vw, 1.5rem)' 
+      }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Filmes</h1>
-          <p style={{ color: '#94a3b8', marginTop: '6px' }}>Tendências e recomendações</p>
+          <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.375rem)', fontWeight: 700, margin: 0 }}>Filmes</h1>
+          <p style={{ color: '#94a3b8', marginTop: '0.375rem', fontSize: 'clamp(0.875rem, 2.5vw, 1rem)' }}>Tendências e recomendações</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          width: isMobile ? '100%' : 'auto'
+        }}>
           <select 
             value={selectedGenre} 
             onChange={(e) => handleGenreChange(Number(e.target.value))}
-            style={{ padding: '8px 10px', background: '#071226', color: '#e6eef8', borderRadius: '6px', border: '1px solid #122032' }}
+            style={{ 
+              padding: 'clamp(0.5rem, 2vw, 0.625rem)', 
+              background: '#071226', 
+              color: '#e6eef8', 
+              borderRadius: '0.375rem', 
+              border: '1px solid #122032',
+              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+              minWidth: '7rem',
+              flex: isMobile ? '1' : 'none'
+            }}
           >
             {GENRES.map(genre => (
               <option key={genre.id} value={genre.id}>{genre.name}</option>
@@ -93,37 +127,70 @@ export default function MoviesPage() {
           </select>
           <button 
             onClick={refreshRecommendations}
-            style={{ padding: '8px 12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+            style={{ 
+              padding: 'clamp(0.5rem, 2vw, 0.75rem)', 
+              background: '#3b82f6', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '0.375rem', 
+              cursor: 'pointer',
+              fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
+              whiteSpace: 'nowrap'
+            }}
           >
             Aleatório
           </button>
         </div>
       </div>
 
-      <section style={{ marginBottom: '48px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0' }}>Tendências</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+      <section style={{ marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: 'clamp(1.125rem, 4vw, 1.25rem)', fontWeight: 700, margin: '0 0 1rem 0' }}>Tendências</h2>
+        <div style={{ 
+          display: isMobile ? 'flex' : 'grid',
+          gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(min(10rem, 100%), 1fr))',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? '0.75rem' : 'clamp(0.75rem, 2vw, 1rem)',
+          paddingBottom: isMobile ? '0.5rem' : '0',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
           {trending.map(movie => (
-            <MovieCard 
-              key={movie.id} 
-              item={movie} 
-              type="movie" 
-              onClick={() => openModal(movie.id, 'movie')} 
-            />
+            <div key={movie.id} style={{ 
+              minWidth: isMobile ? '7.5rem' : 'auto',
+              width: isMobile ? '7.5rem' : 'auto'
+            }}>
+              <MovieCard 
+                item={movie} 
+                type="movie" 
+                onClick={() => handleMovieClick(movie.id)} 
+              />
+            </div>
           ))}
         </div>
       </section>
 
       <section>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 16px 0' }}>Recomendações</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+        <h2 style={{ fontSize: 'clamp(1.125rem, 4vw, 1.25rem)', fontWeight: 700, margin: '0 0 1rem 0' }}>Recomendações</h2>
+        <div style={{ 
+          display: isMobile ? 'flex' : 'grid',
+          gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(min(10rem, 100%), 1fr))',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? '0.75rem' : 'clamp(0.75rem, 2vw, 1rem)',
+          paddingBottom: isMobile ? '0.5rem' : '0',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}>
           {recommendations.map(movie => (
-            <MovieCard 
-              key={movie.id} 
-              item={movie} 
-              type="movie" 
-              onClick={() => openModal(movie.id, 'movie')} 
-            />
+            <div key={movie.id} style={{ 
+              minWidth: isMobile ? '7.5rem' : 'auto',
+              width: isMobile ? '7.5rem' : 'auto'
+            }}>
+              <MovieCard 
+                item={movie} 
+                type="movie" 
+                onClick={() => handleMovieClick(movie.id)} 
+              />
+            </div>
           ))}
         </div>
       </section>
