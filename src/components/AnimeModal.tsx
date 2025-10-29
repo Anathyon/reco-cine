@@ -61,22 +61,26 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
 
   useEffect(() => {
     if (!isOpen || !animeId) return;
+    let mounted = true;
     
     const fetchAnimeDetails = async () => {
       try {
         setLoading(true);
         const response = await fetch(`https://api.jikan.moe/v4/anime/${animeId}`);
         const data = await response.json();
-        setDetails(data.data);
+        if (mounted) setDetails(data.data);
       } catch (error) {
         console.error('Erro ao buscar detalhes do anime:', error);
-        setDetails(null);
+        if (mounted) setDetails(null);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchAnimeDetails();
+    return () => {
+      mounted = false;
+    };
   }, [isOpen, animeId]);
 
   if (!isOpen) return null;
@@ -179,9 +183,6 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                     fontSize: '0.75rem',
                     fontWeight: 700
                   }}>
-                    CINEEXPLORER
-                  </span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
                     {details.year || 'N/A'}
                   </span>
                   <span style={{ 
@@ -194,7 +195,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                     {details.score ? `★ ${details.score}` : 'N/A'}
                   </span>
                   <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                    {details.episodes ? `${details.episodes} episódios` : 'N/A'}
+                    {details.episodes ? `${details.episodes} eps` : 'N/A'}
                   </span>
                 </div>
 
@@ -277,34 +278,6 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                     )}
                   </div>
                 </div>
-
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-around',
-                  paddingTop: '1rem',
-                  borderTop: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                  <button style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '0.5rem' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '0.5rem' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M7 10v12l5-3 5 3V10M7 10l5 3 5-3M7 10l-2-2h14l-2 2"/>
-                    </svg>
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '0.5rem' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M7 7h10v10M7 17L17 7"/>
-                    </svg>
-                  </button>
-                  <button style={{ background: 'none', border: 'none', color: '#94a3b8', padding: '0.5rem' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                    </svg>
-                  </button>
-                </div>
               </>
             ) : (
               <div style={{ padding: '3rem', textAlign: 'center', color: 'salmon' }}>
@@ -350,7 +323,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
             color: '#e6eef8',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
             border: '1px solid rgba(59, 130, 246, 0.1)',
-            maxHeight: '90vh',
+            maxHeight: '95vh',
             display: 'flex',
             flexDirection: 'column'
           }}
@@ -361,7 +334,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
             </div>
           ) : details ? (
             <>
-              <div style={{ position: 'relative', height: '24rem', backgroundColor: '#000', flexShrink: 0 }}>
+              <div style={{ position: 'relative', height: '20rem', backgroundColor: '#000', flexShrink: 0 }}>
                 {backdrop ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -538,11 +511,10 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                 gap: '2rem', 
                 padding: '2rem', 
                 background: 'linear-gradient(145deg, #0b1220 0%, #071226 100%)',
-                minHeight: '20rem',
-                overflow: 'hidden',
+                overflowY: 'auto',
                 flex: 1
               }}>
-                <div style={{ width: '16rem', flexShrink: 0, alignSelf: 'flex-start' }}>
+                <div style={{ width: '16rem', flexShrink: 0 }}>
                   {details.images?.jpg?.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img 
@@ -550,7 +522,8 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                       alt={details.title} 
                       style={{ 
                         width: '100%',
-                        height: 'auto',
+                        height: '22rem',
+                        objectFit: 'cover',
                         borderRadius: '0.75rem',
                         boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
                         border: '1px solid rgba(255,255,255,0.1)',
@@ -560,7 +533,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                   ) : (
                     <div style={{ 
                       width: '100%', 
-                      height: '24rem', 
+                      height: '22rem', 
                       background: 'linear-gradient(135deg, #061323 0%, #0b1220 100%)', 
                       borderRadius: '0.75rem',
                       border: '1px solid rgba(255,255,255,0.1)'
@@ -568,7 +541,7 @@ export default function AnimeModal({ isOpen, animeId, onClose }: AnimeModalProps
                   )}
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   <div>
                     <div style={{ 
                       color: '#94a3b8', 
