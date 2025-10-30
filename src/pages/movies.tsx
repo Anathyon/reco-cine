@@ -44,11 +44,16 @@ export default function MoviesPage() {
     const loadMovies = async () => {
       try {
         setLoading(true);
-        const data = await fetchMovies('popular');
-        const movies = data.results || [];
-        setAllMovies(movies);
-        setTrending(movies.slice(0, 12));
-        setRecommendations(shuffle(movies));
+        // Carregar múltiplas páginas para ter mais variedade
+        const [page1, page2, page3] = await Promise.all([
+          fetchMovies('popular'),
+          fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=2`).then(r => r.json()),
+          fetch(`https://api.themoviedb.org/3/movie/top_rated?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=1`).then(r => r.json())
+        ]);
+        const allMoviesData = [...(page1.results || []), ...(page2.results || []), ...(page3.results || [])];
+        setAllMovies(allMoviesData);
+        setTrending(page1.results?.slice(0, 12) || []);
+        setRecommendations(shuffle(allMoviesData.slice(12))); // Excluir os 12 primeiros das recomendações
       } catch {
         setError('Erro ao carregar filmes');
       } finally {
@@ -58,24 +63,51 @@ export default function MoviesPage() {
     loadMovies();
   }, []);
 
-  const handleGenreChange = useCallback((genreId: number) => {
+  const handleGenreChange = useCallback(async (genreId: number) => {
     setSelectedGenre(genreId);
-    if (genreId === 0) {
-      setRecommendations(shuffle(allMovies));
-    } else {
-      const filtered = allMovies.filter(movie => movie.genre_ids?.includes(genreId));
-      setRecommendations(shuffle(filtered));
+    setLoading(true);
+    
+    try {
+      if (genreId === 0) {
+        // Sem filtro - tendências permanecem populares, recomendações são aleatórias
+        const data = await fetchMovies('popular');
+        setTrending(data.results?.slice(0, 12) || []);
+        setRecommendations(shuffle(allMovies.slice(12)));
+      } else {
+        // Com filtro - buscar filmes do gênero específico
+        const genreData = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&with_genres=${genreId}&page=1`).then(r => r.json());
+        const genreMovies = genreData.results || [];
+        setTrending(genreMovies.slice(0, 12));
+        setRecommendations(shuffle(genreMovies.slice(12)));
+      }
+    } catch {
+      setError('Erro ao filtrar filmes');
+    } finally {
+      setLoading(false);
     }
   }, [allMovies]);
 
-  const refreshRecommendations = useCallback(() => {
-    if (selectedGenre === 0) {
-      setRecommendations(shuffle(allMovies));
-    } else {
-      const filtered = allMovies.filter(movie => movie.genre_ids?.includes(selectedGenre));
-      setRecommendations(shuffle(filtered));
+  const refreshRecommendations = useCallback(async () => {
+    setLoading(true);
+    
+    try {
+      if (selectedGenre === 0) {
+        // Buscar página aleatória para mais variedade
+        const randomPage = Math.floor(Math.random() * 5) + 1;
+        const randomData = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=${randomPage}`).then(r => r.json());
+        setRecommendations(shuffle(randomData.results || []));
+      } else {
+        // Buscar página aleatória do gênero específico
+        const randomPage = Math.floor(Math.random() * 3) + 1;
+        const genreData = await fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&with_genres=${selectedGenre}&page=${randomPage}`).then(r => r.json());
+        setRecommendations(shuffle(genreData.results || []));
+      }
+    } catch {
+      setError('Erro ao atualizar recomendações');
+    } finally {
+      setLoading(false);
     }
-  }, [allMovies, selectedGenre]);
+  }, [selectedGenre]);
 
   const handleMovieClick = useCallback((movieId: number) => {
     openModal(movieId, 'movie');

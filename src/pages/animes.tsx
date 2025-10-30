@@ -54,12 +54,20 @@ export default function AnimesPage() {
     const loadAnimes = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://api.jikan.moe/v4/top/anime?limit=25');
-        const data = await response.json();
-        const animes = data.data || [];
-        setAllAnimes(animes);
-        setTrending(animes.slice(0, 12));
-        setRecommendations(shuffle(animes));
+        // Carregar múltiplas fontes para ter mais variedade
+        const [topAnimes, seasonalAnimes, popularAnimes] = await Promise.all([
+          fetch('https://api.jikan.moe/v4/top/anime?limit=25').then(r => r.json()),
+          fetch('https://api.jikan.moe/v4/seasons/now?limit=25').then(r => r.json()),
+          fetch('https://api.jikan.moe/v4/anime?order_by=popularity&limit=25').then(r => r.json())
+        ]);
+        const allAnimesData = [...(topAnimes.data || []), ...(seasonalAnimes.data || []), ...(popularAnimes.data || [])];
+        // Remover duplicatas baseado no mal_id
+        const uniqueAnimes = allAnimesData.filter((anime, index, self) => 
+          index === self.findIndex(a => a.mal_id === anime.mal_id)
+        );
+        setAllAnimes(uniqueAnimes);
+        setTrending(topAnimes.data?.slice(0, 12) || []);
+        setRecommendations(shuffle(uniqueAnimes.slice(12))); // Excluir os 12 primeiros das recomendações
       } catch {
         setError('Erro ao carregar animes');
       } finally {
@@ -69,28 +77,55 @@ export default function AnimesPage() {
     loadAnimes();
   }, []);
 
-  const handleGenreChange = useCallback((genreId: number) => {
+  const handleGenreChange = useCallback(async (genreId: number) => {
     setSelectedGenre(genreId);
-    if (genreId === 0) {
-      setRecommendations(shuffle(allAnimes));
-    } else {
-      const filtered = allAnimes.filter(anime => 
-        anime.genres?.some(genre => genre.name.toLowerCase().includes(GENRES.find(g => g.id === genreId)?.name.toLowerCase() || ''))
-      );
-      setRecommendations(shuffle(filtered.length > 0 ? filtered : allAnimes));
+    setLoading(true);
+    
+    try {
+      if (genreId === 0) {
+        // Sem filtro - tendências permanecem top animes, recomendações são aleatórias
+        const topData = await fetch('https://api.jikan.moe/v4/top/anime?limit=25').then(r => r.json());
+        setTrending(topData.data?.slice(0, 12) || []);
+        setRecommendations(shuffle(allAnimes.slice(12)));
+      } else {
+        // Com filtro - buscar animes do gênero específico
+        const genreData = await fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&limit=25`).then(r => r.json());
+        const genreAnimes = genreData.data || [];
+        setTrending(genreAnimes.slice(0, 12));
+        setRecommendations(shuffle(genreAnimes.slice(12)));
+      }
+    } catch {
+      setError('Erro ao filtrar animes');
+    } finally {
+      setLoading(false);
     }
   }, [allAnimes]);
 
-  const refreshRecommendations = useCallback(() => {
-    if (selectedGenre === 0) {
-      setRecommendations(shuffle(allAnimes));
-    } else {
-      const filtered = allAnimes.filter(anime => 
-        anime.genres?.some(genre => genre.name.toLowerCase().includes(GENRES.find(g => g.id === selectedGenre)?.name.toLowerCase() || ''))
-      );
-      setRecommendations(shuffle(filtered.length > 0 ? filtered : allAnimes));
+  const refreshRecommendations = useCallback(async () => {
+    setLoading(true);
+    
+    try {
+      if (selectedGenre === 0) {
+        // Buscar animes aleatórios de diferentes fontes
+        const randomSources = [
+          'https://api.jikan.moe/v4/anime?order_by=popularity&limit=25',
+          'https://api.jikan.moe/v4/anime?order_by=score&limit=25',
+          'https://api.jikan.moe/v4/anime?order_by=members&limit=25'
+        ];
+        const randomSource = randomSources[Math.floor(Math.random() * randomSources.length)];
+        const randomData = await fetch(randomSource).then(r => r.json());
+        setRecommendations(shuffle(randomData.data || []));
+      } else {
+        // Buscar animes aleatórios do gênero específico
+        const genreData = await fetch(`https://api.jikan.moe/v4/anime?genres=${selectedGenre}&order_by=popularity&limit=25`).then(r => r.json());
+        setRecommendations(shuffle(genreData.data || []));
+      }
+    } catch {
+      setError('Erro ao atualizar recomendações');
+    } finally {
+      setLoading(false);
     }
-  }, [allAnimes, selectedGenre]);
+  }, [selectedGenre]);
 
   const openAnimeModal = useCallback((animeId: number) => {
     setSelectedAnimeId(animeId);

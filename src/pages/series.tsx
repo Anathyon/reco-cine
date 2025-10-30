@@ -44,11 +44,16 @@ export default function SeriesPage() {
     const loadSeries = async () => {
       try {
         setLoading(true);
-        const data = await fetchMovies('tv:popular');
-        const series = data.results || [];
-        setAllSeries(series);
-        setTrending(series.slice(0, 12));
-        setRecommendations(shuffle(series));
+        // Carregar múltiplas páginas para ter mais variedade
+        const [page1, page2, page3] = await Promise.all([
+          fetchMovies('tv:popular'),
+          fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=2`).then(r => r.json()),
+          fetch(`https://api.themoviedb.org/3/tv/top_rated?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=1`).then(r => r.json())
+        ]);
+        const allSeriesData = [...(page1.results || []), ...(page2.results || []), ...(page3.results || [])];
+        setAllSeries(allSeriesData);
+        setTrending(page1.results?.slice(0, 12) || []);
+        setRecommendations(shuffle(allSeriesData.slice(12))); // Excluir os 12 primeiros das recomendações
       } catch {
         setError('Erro ao carregar séries');
       } finally {
@@ -58,24 +63,51 @@ export default function SeriesPage() {
     loadSeries();
   }, []);
 
-  const handleGenreChange = useCallback((genreId: number) => {
+  const handleGenreChange = useCallback(async (genreId: number) => {
     setSelectedGenre(genreId);
-    if (genreId === 0) {
-      setRecommendations(shuffle(allSeries));
-    } else {
-      const filtered = allSeries.filter(series => series.genre_ids?.includes(genreId));
-      setRecommendations(shuffle(filtered));
+    setLoading(true);
+    
+    try {
+      if (genreId === 0) {
+        // Sem filtro - tendências permanecem populares, recomendações são aleatórias
+        const data = await fetchMovies('tv:popular');
+        setTrending(data.results?.slice(0, 12) || []);
+        setRecommendations(shuffle(allSeries.slice(12)));
+      } else {
+        // Com filtro - buscar séries do gênero específico
+        const genreData = await fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&with_genres=${genreId}&page=1`).then(r => r.json());
+        const genreSeries = genreData.results || [];
+        setTrending(genreSeries.slice(0, 12));
+        setRecommendations(shuffle(genreSeries.slice(12)));
+      }
+    } catch {
+      setError('Erro ao filtrar séries');
+    } finally {
+      setLoading(false);
     }
   }, [allSeries]);
 
-  const refreshRecommendations = useCallback(() => {
-    if (selectedGenre === 0) {
-      setRecommendations(shuffle(allSeries));
-    } else {
-      const filtered = allSeries.filter(series => series.genre_ids?.includes(selectedGenre));
-      setRecommendations(shuffle(filtered));
+  const refreshRecommendations = useCallback(async () => {
+    setLoading(true);
+    
+    try {
+      if (selectedGenre === 0) {
+        // Buscar página aleatória para mais variedade
+        const randomPage = Math.floor(Math.random() * 5) + 1;
+        const randomData = await fetch(`https://api.themoviedb.org/3/tv/popular?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&page=${randomPage}`).then(r => r.json());
+        setRecommendations(shuffle(randomData.results || []));
+      } else {
+        // Buscar página aleatória do gênero específico
+        const randomPage = Math.floor(Math.random() * 3) + 1;
+        const genreData = await fetch(`https://api.themoviedb.org/3/discover/tv?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=pt-BR&with_genres=${selectedGenre}&page=${randomPage}`).then(r => r.json());
+        setRecommendations(shuffle(genreData.results || []));
+      }
+    } catch {
+      setError('Erro ao atualizar recomendações');
+    } finally {
+      setLoading(false);
     }
-  }, [allSeries, selectedGenre]);
+  }, [selectedGenre]);
 
   const handleSeriesClick = useCallback((seriesId: number) => {
     openModal(seriesId, 'tv');
