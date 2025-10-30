@@ -11,7 +11,7 @@ import { useModalStore } from '../store/modalStore';
 export default function SearchPage() {
   const [movieResults, setMovieResults] = useState<Movie[]>([]);
   const [animeResults, setAnimeResults] = useState<AnimeSearchResult[]>([]);
-  const [activeTab, setActiveTab] = useState<'movies' | 'animes'>('movies');
+  const [activeTab, setActiveTab] = useState<'movies' | 'tv' | 'animes'>('movies');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAnimeId, setSelectedAnimeId] = useState<number | null>(null);
@@ -27,6 +27,10 @@ export default function SearchPage() {
       
       if (activeTab === 'movies') {
         const data = await fetchMovies(params.query);
+        setMovieResults(data.results || []);
+        setAnimeResults([]);
+      } else if (activeTab === 'tv') {
+        const data = await fetchMovies(`tv:${params.query}`);
         setMovieResults(data.results || []);
         setAnimeResults([]);
       } else {
@@ -72,7 +76,20 @@ export default function SearchPage() {
             cursor: 'pointer' 
           }}
         >
-          Filmes/Séries
+          Filmes
+        </button>
+        <button 
+          onClick={() => setActiveTab('tv')}
+          style={{ 
+            padding: '8px 16px', 
+            background: activeTab === 'tv' ? '#3b82f6' : '#1e293b', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 6, 
+            cursor: 'pointer' 
+          }}
+        >
+          Séries
         </button>
         <button 
           onClick={() => setActiveTab('animes')}
@@ -102,6 +119,15 @@ export default function SearchPage() {
               item={item} 
               type="movie" 
               onClick={() => openModal(item.id, 'movie')} 
+            />
+          ))
+        ) : activeTab === 'tv' ? (
+          movieResults.map((item) => (
+            <MovieCard 
+              key={item.id} 
+              item={item} 
+              type="tv" 
+              onClick={() => openModal(item.id, 'tv')} 
             />
           ))
         ) : (
