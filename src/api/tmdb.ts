@@ -2,18 +2,36 @@ const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE = process.env.NEXT_PUBLIC_TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 const IMG_BASE = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE || 'https://image.tmdb.org/t/p';
 
-if (!API_KEY) {
-  console.warn('NEXT_PUBLIC_TMDB_API_KEY não está definida. Adicione-a em .env.local');
+if (!API_KEY && typeof window !== 'undefined') {
+  console.warn('NEXT_PUBLIC_TMDB_API_KEY não está definida. Adicione-a nas variáveis de ambiente da Vercel');
 }
 
 async function tmdbFetch(path: string, params = '') {
-  const url = `${BASE}${path}?api_key=${API_KEY}${params ? `&${params}` : ''}&language=pt-BR`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    const text = await res.text().catch(() => 'no body');
-    throw new Error(`TMDB fetch error: ${res.status} ${text}`);
+  if (!API_KEY) {
+    throw new Error('API Key do TMDB não configurada');
   }
-  return res.json();
+  
+  const url = `${BASE}${path}?api_key=${API_KEY}${params ? `&${params}` : ''}&language=pt-BR`;
+  
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 3600 } // Cache por 1 hora
+    });
+    
+    if (!res.ok) {
+      const text = await res.text().catch(() => 'no body');
+      throw new Error(`TMDB fetch error: ${res.status} ${text}`);
+    }
+    
+    return res.json();
+  } catch (error) {
+    console.error('Erro na requisição TMDB:', error);
+    throw error;
+  }
 }
 
 export async function fetchMovies(query: string) {

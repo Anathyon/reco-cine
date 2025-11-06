@@ -16,8 +16,18 @@ export interface AnimeSearchResult {
 
 export async function searchAnimes(query: string): Promise<AnimeSearchResult[]> {
   try {
-    const response = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`);
-    if (!response.ok) throw new Error('Erro na busca');
+    const response = await fetch(`${BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=20`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 1800 } // Cache por 30 minutos
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro na busca: ${response.status}`);
+    }
+    
     const data = await response.json();
     return data.data || [];
   } catch (error) {
@@ -28,8 +38,18 @@ export async function searchAnimes(query: string): Promise<AnimeSearchResult[]> 
 
 export async function getAnimeDetails(id: number) {
   try {
-    const response = await fetch(`${BASE_URL}/anime/${id}`);
-    if (!response.ok) throw new Error('Erro ao buscar detalhes');
+    const response = await fetch(`${BASE_URL}/anime/${id}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 3600 } // Cache por 1 hora
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar detalhes: ${response.status}`);
+    }
+    
     const data = await response.json();
     return data.data;
   } catch (error) {
