@@ -100,7 +100,7 @@ Busque por qualquer título com nosso sistema de abas inteligente:
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/reco-cine.git
+git clone https://github.com/Anathyon/reco-cine.git
 cd reco-cine
 
 # Instale as dependências
