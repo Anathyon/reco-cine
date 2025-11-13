@@ -23,7 +23,12 @@ export default function Home() {
       </Head>
       <MovieModal />
       {isMobile ? (
-        <MobileCatalog />
+        <div>
+          <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1.5rem' }}>
+            <Hero />
+          </div>
+          <MobileCatalog />
+        </div>
       ) : (
         <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1.5rem' }}>
           <Hero />
