@@ -193,7 +193,6 @@ export default function MoviesPage() {
             }}>
               <MovieCard 
                 item={movie} 
-                type="movie" 
                 onClick={() => handleMovieClick(movie.id)} 
               />
             </div>
@@ -219,7 +218,6 @@ export default function MoviesPage() {
             }}>
               <MovieCard 
                 item={movie} 
-                type="movie" 
                 onClick={() => handleMovieClick(movie.id)} 
               />
             </div>

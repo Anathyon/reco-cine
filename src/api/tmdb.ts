@@ -2,13 +2,27 @@ const API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE = process.env.NEXT_PUBLIC_TMDB_BASE_URL || 'https://api.themoviedb.org/3';
 const IMG_BASE = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE || 'https://image.tmdb.org/t/p';
 
-if (!API_KEY && typeof window !== 'undefined') {
-  console.warn('NEXT_PUBLIC_TMDB_API_KEY não está definida. Adicione-a nas variáveis de ambiente da Vercel');
+function getMockData(path: string) {
+  const mockMovies = {
+    results: [
+      { id: 1, title: 'Filme Exemplo 1', overview: 'Descrição do filme', release_date: '2024-01-01', vote_average: 8.5, poster_path: '/example1.jpg', genre_ids: [28, 35] },
+      { id: 2, title: 'Filme Exemplo 2', overview: 'Descrição do filme', release_date: '2024-01-02', vote_average: 7.8, poster_path: '/example2.jpg', genre_ids: [18] }
+    ]
+  };
+  const mockSeries = {
+    results: [
+      { id: 1, name: 'Série Exemplo 1', overview: 'Descrição da série', first_air_date: '2024-01-01', vote_average: 9.0, poster_path: '/series1.jpg', genre_ids: [18, 10759] }
+    ]
+  };
+  return path.includes('/tv/') ? mockSeries : mockMovies;
 }
+
+
 
 async function tmdbFetch(path: string, params = '') {
   if (!API_KEY) {
-    throw new Error('API Key do TMDB não configurada');
+    console.warn('API Key do TMDB não configurada, usando dados mock');
+    return getMockData(path);
   }
   
   const url = `${BASE}${path}?api_key=${API_KEY}${params ? `&${params}` : ''}&language=pt-BR`;

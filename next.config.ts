@@ -3,10 +3,17 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
-  swcMinify: true,
   compress: true,
   poweredByHeader: false,
   generateEtags: false,
+  outputFileTracingRoot: __dirname,
+  
+  // Configuração para desenvolvimento - permite origens específicas
+  allowedDevOrigins: [
+    'localhost:3000',
+    '127.0.0.1:3000',
+    'api.themoviedb.org'
+  ],
   
   // Configurações para produção
   experimental: {

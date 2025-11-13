@@ -193,7 +193,6 @@ export default function SeriesPage() {
             }}>
               <MovieCard 
                 item={series} 
-                type="tv" 
                 onClick={() => handleSeriesClick(series.id)} 
               />
             </div>
@@ -219,7 +218,6 @@ export default function SeriesPage() {
             }}>
               <MovieCard 
                 item={series} 
-                type="tv" 
                 onClick={() => handleSeriesClick(series.id)} 
               />
             </div>

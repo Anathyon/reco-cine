@@ -1,45 +1,59 @@
-import { useEffect, useState } from 'react';
-import { fetchMovies, fetchMovieDetails } from '../api/tmdb';
+import { useState, useEffect } from 'react';
+import { fetchMovies } from '../api/tmdb';
 import { Movie } from '../types';
 
-const useMovies = () => {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+interface UseMoviesResult {
+  movies: Movie[];
+  loading: boolean;
+  error: string | null;
+}
 
-  const getMovies = async (query: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchMovies(query);
-      setMovies(data.results);
-    } catch (err) {
-      setError('Failed to fetch movies');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const cache = new Map<string, { data: Movie[]; timestamp: number }>();
+const CACHE_TIME = 5 * 60 * 1000; // 5 minutos
 
-  const getMovieDetails = async (id: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const details = await fetchMovieDetails(id);
-      return details;
-    } catch (err) {
-      setError('Failed to fetch movie details');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function useMovies(query: string): UseMoviesResult {
+  const [state, setState] = useState<UseMoviesResult>({
+    movies: [],
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    getMovies('popular'); // Fetch popular movies on initial load
-  }, []);
+    if (!query) return;
 
-  return { movies, loading, error, getMovies, getMovieDetails };
-};
+    // Verificar cache
+    const cached = cache.get(query);
+    if (cached && Date.now() - cached.timestamp < CACHE_TIME) {
+      setState({ movies: cached.data, loading: false, error: null });
+      return;
+    }
 
-export default useMovies;
+    let cancelled = false;
+
+    const loadData = async () => {
+      try {
+        setState(prev => ({ ...prev, loading: true, error: null }));
+        
+        const result = await fetchMovies(query);
+        
+        if (!cancelled) {
+          const movies = result.results || [];
+          cache.set(query, { data: movies, timestamp: Date.now() });
+          setState({ movies, loading: false, error: null });
+        }
+      } catch {
+        if (!cancelled) {
+          setState({ movies: [], loading: false, error: 'Erro ao carregar' });
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
+
+  return state;
+}

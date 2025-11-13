@@ -1,0 +1,67 @@
+{
+  "name": "Reco Cine - Recomendações de Filmes e Séries",
+  "short_name": "Reco Cine",
+  "description": "Descubra os melhores filmes, séries e animes com recomendações personalizadas. Acesso offline e experiência nativa.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#071226",
+  "theme_color": "#071226",
+  "categories": ["entertainment", "movies", "lifestyle"],
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Filmes Populares",
+      "short_name": "Filmes",
+      "description": "Ver filmes populares",
+      "url": "/movies",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Séries Populares",
+      "short_name": "Séries",
+      "description": "Ver séries populares",
+      "url": "/series",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Favoritos",
+      "short_name": "Favoritos",
+      "description": "Seus favoritos salvos",
+      "url": "/favorites",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

@@ -117,7 +117,6 @@ export default function SearchPage() {
             <MovieCard 
               key={item.id} 
               item={item} 
-              type="movie" 
               onClick={() => openModal(item.id, 'movie')} 
             />
           ))
@@ -126,7 +125,6 @@ export default function SearchPage() {
             <MovieCard 
               key={item.id} 
               item={item} 
-              type="tv" 
               onClick={() => openModal(item.id, 'tv')} 
             />
           ))

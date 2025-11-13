@@ -16,14 +16,7 @@ interface FavoriteItem {
   type: 'movie' | 'tv' | 'anime';
 }
 
-const navItems = [
-  { href: '/', label: 'Início' },
-  { href: '/movies', label: 'Filmes' },
-  { href: '/series', label: 'Séries' },
-  { href: '/animes', label: 'Animes' },
-  { href: '/search', label: 'Buscar' },
-  { href: '/favorites', label: 'Favoritos' },
-];
+
 
 export default function FavoritesPage() {
   const { favorites } = useFavoritesStore();
@@ -90,7 +83,6 @@ export default function FavoritesPage() {
       <MovieCard 
         key={item.id} 
         item={item} 
-        type={item.type === 'tv' ? 'tv' : 'movie'} 
         onClick={() => handleItemClick(item)} 
       />
     );
