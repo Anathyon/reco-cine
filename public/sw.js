@@ -1,165 +1,63 @@
-const CACHE_NAME = 'reco-cine-v1';
-const STATIC_CACHE = 'reco-cine-static-v1';
-const DYNAMIC_CACHE = 'reco-cine-dynamic-v1';
+const CACHE_VERSION = 'v3';
+const API_CACHE = `reco-cine-api-${CACHE_VERSION}`;
+const IMAGE_CACHE = `reco-cine-images-${CACHE_VERSION}`;
 
-const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/favicon.ico'
-];
-
-const API_CACHE_DURATION = 1000 * 60 * 30; // 30 minutos
-
-// Install event
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        return cache.addAll(STATIC_ASSETS);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
-  );
+  self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        return self.clients.claim();
-      })
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (!cacheName.includes(CACHE_VERSION)) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Handle API requests
-  if (url.hostname === 'api.themoviedb.org') {
+  const url = new URL(event.request.url);
+  
+  // Only handle external API requests
+  if (url.hostname === 'api.themoviedb.org' || url.hostname === 'api.jikan.moe') {
     event.respondWith(
-      caches.open(DYNAMIC_CACHE)
-        .then((cache) => {
-          return cache.match(request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                const cachedDate = new Date(cachedResponse.headers.get('sw-cached-date'));
-                const now = new Date();
-                
-                if (now - cachedDate < API_CACHE_DURATION) {
-                  return cachedResponse;
-                }
-              }
-
-              return fetch(request)
-                .then((response) => {
-                  if (response.ok) {
-                    const responseClone = response.clone();
-                    const headers = new Headers(responseClone.headers);
-                    headers.set('sw-cached-date', new Date().toISOString());
-                    
-                    const modifiedResponse = new Response(responseClone.body, {
-                      status: responseClone.status,
-                      statusText: responseClone.statusText,
-                      headers: headers
-                    });
-                    
-                    cache.put(request, modifiedResponse);
-                  }
-                  return response;
-                })
-                .catch(() => {
-                  return cachedResponse || new Response('Offline', { status: 503 });
-                });
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(API_CACHE).then((cache) => {
+              cache.put(event.request, responseClone);
             });
-        })
-    );
-    return;
-  }
-
-  // Handle image requests
-  if (url.hostname === 'image.tmdb.org') {
-    event.respondWith(
-      caches.open(DYNAMIC_CACHE)
-        .then((cache) => {
-          return cache.match(request)
-            .then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-
-              return fetch(request)
-                .then((response) => {
-                  if (response.ok) {
-                    cache.put(request, response.clone());
-                  }
-                  return response;
-                })
-                .catch(() => {
-                  return new Response('Image not available offline', { status: 503 });
-                });
-            });
-        })
-    );
-    return;
-  }
-
-  // Handle static assets
-  if (request.destination === 'document' || 
-      request.destination === 'script' || 
-      request.destination === 'style' ||
-      request.url.includes('_next/static')) {
-    
-    event.respondWith(
-      caches.match(request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
           }
-
-          return fetch(request)
-            .then((response) => {
-              if (response.ok) {
-                const cache = request.url.includes('_next/static') ? STATIC_CACHE : DYNAMIC_CACHE;
-                caches.open(cache)
-                  .then((cache) => {
-                    cache.put(request, response.clone());
-                  });
-              }
-              return response;
-            })
-            .catch(() => {
-              if (request.destination === 'document') {
-                return caches.match('/');
-              }
-              return new Response('Resource not available offline', { status: 503 });
-            });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
         })
     );
-    return;
+  } else if (url.hostname === 'image.tmdb.org') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(IMAGE_CACHE).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
   }
-
-  // Default: network first, fallback to cache
-  event.respondWith(
-    fetch(request)
-      .catch(() => {
-        return caches.match(request);
-      })
-  );
+  // Don't intercept any other requests - let Next.js handle them
 });
 
 // Background sync for offline actions
