@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   generateEtags: false,
   outputFileTracingRoot: __dirname,
   
+  // Webpack configuration for development
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      config.devtool = 'eval-source-map';
+    }
+    return config;
+  },
+  
   // Configuração para desenvolvimento - permite origens específicas
   allowedDevOrigins: [
     'localhost:3000',

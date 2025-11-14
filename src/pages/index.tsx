@@ -5,6 +5,7 @@ import MovieGrid from '../components/MovieGrid';
 import AnimesSection from '../components/AnimesSection';
 import MobileCatalog from '../components/MobileCatalog';
 import MovieModal from '../components/MovieModal';
+import MobilePWANotification from '../components/MobilePWANotification';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
@@ -22,6 +23,7 @@ export default function Home() {
         <title>CineExplorer - Discover Movies and Series</title>
       </Head>
       <MovieModal />
+      <MobilePWANotification />
       {isMobile ? (
         <div>
           <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1.5rem' }}>

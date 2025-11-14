@@ -5,14 +5,26 @@ import Footer from '../components/layout/Footer';
 import InstallPWA from '../components/InstallPWA';
 import Head from 'next/head';
 import { useEffect } from 'react';
+import { testPWAFeatures } from '../utils/pwaTest';
+import { debugPWA } from '../utils/pwaDebug';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(() => console.log('SW registered'))
-        .catch(() => console.log('SW registration failed'));
+        .then((registration) => {
+          console.log('✅ Service Worker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('❌ Service Worker registration failed:', error);
+        });
     }
+    
+    // Test PWA features after SW registration
+    setTimeout(async () => {
+      await testPWAFeatures();
+      await debugPWA();
+    }, 2000);
   }, []);
   return (
     <>

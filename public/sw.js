@@ -1,22 +1,29 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const API_CACHE = `reco-cine-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `reco-cine-images-${CACHE_VERSION}`;
+const STATIC_CACHE = `reco-cine-static-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (!cacheName.includes(CACHE_VERSION)) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker activated and claiming clients');
+      return self.clients.claim();
+    })
   );
 });
 
