@@ -33,7 +33,7 @@ async function tmdbFetch(path: string, params = '') {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600 } // Cache por 1 hora
+      cache: 'force-cache'
     });
     
     if (!res.ok) {

@@ -5,42 +5,33 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const INSTALL_PROMPT_DISMISSED_KEY = 'pwa-install-dismissed';
-const DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 dias
-
 export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Verificar se já está instalado
-    const checkIfInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isInWebAppiOS = (window.navigator as any).standalone === true;
-      return isStandalone || isInWebAppiOS;
-    };
+    setMounted(true);
+    
+    if (typeof window === 'undefined') return;
 
-    if (checkIfInstalled()) {
-      setIsInstalled(true);
-      return;
-    }
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                       (window.navigator as any).standalone === true;
+    
+    if (isInstalled) return;
 
-    // Verificar se foi dispensado recentemente
-    const dismissedTime = localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY);
-    if (dismissedTime && Date.now() - parseInt(dismissedTime) < DISMISS_DURATION) {
+    const dismissedTime = localStorage.getItem('pwa-install-dismissed');
+    if (dismissedTime && Date.now() - parseInt(dismissedTime) < 7 * 24 * 60 * 60 * 1000) {
       return;
     }
 
     const handler = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Mostrar após um delay para melhor UX
       setTimeout(() => setShowInstall(true), 3000);
     };
 
     const appInstalledHandler = () => {
-      setIsInstalled(true);
       setShowInstall(false);
       setDeferredPrompt(null);
     };
@@ -55,7 +46,7 @@ export default function InstallPWA() {
   }, []);
 
   const handleDismiss = useCallback(() => {
-    localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, Date.now().toString());
+    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
     setShowInstall(false);
   }, []);
 
@@ -77,7 +68,7 @@ export default function InstallPWA() {
     }
   }, [deferredPrompt, handleDismiss]);
 
-  if (!showInstall || isInstalled) return null;
+  if (!mounted || !showInstall) return null;
 
   return (
     <div 
@@ -93,8 +84,7 @@ export default function InstallPWA() {
         backgroundColor: '#2563eb',
         padding: '0.75rem 1rem',
         color: 'white',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        animation: 'slideInUp 0.3s ease-out',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
         maxWidth: '320px'
       }}
     >
@@ -117,14 +107,7 @@ export default function InstallPWA() {
             fontSize: '0.75rem',
             fontWeight: 700,
             color: 'white',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            cursor: 'pointer'
           }}
         >
           INSTALAR
@@ -143,16 +126,8 @@ export default function InstallPWA() {
             justifyContent: 'center',
             fontSize: '1rem',
             color: 'white',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
+            cursor: 'pointer'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-          aria-label="Fechar"
         >
           ×
         </button>

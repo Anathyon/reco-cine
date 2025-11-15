@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import useMovies from '../hooks/useMovies';
+import useMovies from '../hooks/useMoviesSimple';
 import MovieCard from './MovieCard';
-import MovieModal from './MovieModal';
 import { useModalStore } from '../store/modalStore';
 
 const GENRES = [
@@ -29,7 +28,6 @@ export default function MovieGrid() {
 
   return (
     <div style={{ padding: '2rem 1rem', maxWidth: 1200, margin: '0 auto' }}>
-      <MovieModal />
       
       {/* Filmes Section */}
       <section style={{ marginBottom: '3rem' }}>

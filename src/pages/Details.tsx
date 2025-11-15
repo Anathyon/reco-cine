@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { fetchMovieDetails } from '../api/tmdb';
 import { Movie } from '../types';
 
 export default function Details() {
-  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const { id } = router.query;
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,21 +23,22 @@ export default function Details() {
       }
     };
 
-    getMovieDetails();
+    if (id) {
+      getMovieDetails();
+    }
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div style={{ padding: '2rem', color: 'white' }}>Carregando...</div>;
+  if (error) return <div style={{ padding: '2rem', color: 'red' }}>{error}</div>;
 
   return (
-    <div className="p-4 bg-gray-950 text-white">
+    <div style={{ padding: '2rem', backgroundColor: '#0f172a', color: 'white', minHeight: '100vh' }}>
       {movie && (
         <>
-          <h1 className="text-3xl font-bold">{movie.title}</h1>
-          <p className="mt-2">Rating: {movie.vote_average}</p>
-          <p className="mt-2">{movie.overview}</p>
-          <p className="mt-2">Release Date: {movie.release_date}</p>
-          {/* Add more movie details as needed */}
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>{movie.title}</h1>
+          <p style={{ marginBottom: '0.5rem' }}>Avaliação: {movie.vote_average}</p>
+          <p style={{ marginBottom: '0.5rem' }}>{movie.overview}</p>
+          <p style={{ marginBottom: '0.5rem' }}>Data de Lançamento: {movie.release_date}</p>
         </>
       )}
     </div>

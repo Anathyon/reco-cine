@@ -21,7 +21,7 @@ export async function searchAnimes(query: string): Promise<AnimeSearchResult[]> 
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 1800 } // Cache por 30 minutos
+      cache: 'force-cache'
     });
     
     if (!response.ok) {
@@ -43,7 +43,7 @@ export async function getAnimeDetails(id: number) {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 3600 } // Cache por 1 hora
+      cache: 'force-cache'
     });
     
     if (!response.ok) {

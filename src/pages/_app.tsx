@@ -10,21 +10,27 @@ import { debugPWA } from '../utils/pwaDebug';
 
 export default function App({ Component, pageProps }: AppProps) {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('✅ Service Worker registered:', registration.scope);
-        })
-        .catch((error) => {
-          console.log('❌ Service Worker registration failed:', error);
-        });
+    if (typeof window !== 'undefined') {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('✅ Service Worker registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      }
+      
+      // Test PWA features after SW registration
+      setTimeout(async () => {
+        try {
+          await testPWAFeatures();
+          await debugPWA();
+        } catch (error) {
+          console.log('PWA test error:', error);
+        }
+      }, 3000);
     }
-    
-    // Test PWA features after SW registration
-    setTimeout(async () => {
-      await testPWAFeatures();
-      await debugPWA();
-    }, 2000);
   }, []);
   return (
     <>

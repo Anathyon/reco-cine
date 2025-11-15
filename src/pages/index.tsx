@@ -9,13 +9,35 @@ import MobilePWANotification from '../components/MobilePWANotification';
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    setMounted(true);
+    
+    if (typeof window !== 'undefined') {
+      const checkMobile = () => setIsMobile(window.innerWidth < 768);
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
   }, []);
+
+  if (!mounted) {
+    return (
+      <>
+        <Head>
+          <title>CineExplorer - Discover Movies and Series</title>
+        </Head>
+        <MovieModal />
+        <MobilePWANotification />
+        <div style={{ maxWidth: '75rem', margin: '0 auto', padding: '1.5rem' }}>
+          <Hero />
+          <MovieGrid />
+          <AnimesSection />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
