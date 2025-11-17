@@ -39,7 +39,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="theme-color" content="#0f172a" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
-        <title>Reco Cine</title>
+        <title>Recomendações cinematográficas</title>
       </Head>
       
       <div style={{

@@ -91,7 +91,7 @@ export default function InstallPWA() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <span style={{ fontSize: '1.5rem' }}>📱</span>
         <div>
-          <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Instalar Reco Cine</div>
+          <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>Instalar Recomendações Cinematográficas</div>
           <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Acesso rápido e offline</div>
         </div>
       </div>

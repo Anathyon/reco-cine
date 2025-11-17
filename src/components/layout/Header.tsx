@@ -54,7 +54,7 @@ export default function Header() {
                 fontWeight: 'bold',
                 color: '#f1f5f9',
               }}>
-                Reco Cine
+                Cine Explorer
               </span>
             </div>
           </Link>
