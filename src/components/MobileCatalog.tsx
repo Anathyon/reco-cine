@@ -3,6 +3,8 @@ import { fetchMovies } from '../api/tmdb';
 import { searchAnimes } from '../api/jikan';
 import { Movie } from '../types';
 import { useModalStore } from '../store/modalStore';
+import { useAnimeModalStore } from '../store/animeModalStore';
+import AnimeModal from './AnimeModal';
 
 interface AnimeResult {
   mal_id: number;
@@ -15,6 +17,7 @@ export default function MobileCatalog() {
   const [series, setSeries] = useState<Movie[]>([]);
   const [animes, setAnimes] = useState<AnimeResult[]>([]);
   const { openModal } = useModalStore();
+  const { openModal: openAnimeModal, isOpen: isAnimeModalOpen, selectedId: selectedAnimeId, closeModal: closeAnimeModal } = useAnimeModalStore();
 
   useEffect(() => {
     const loadContent = async () => {
@@ -59,7 +62,7 @@ export default function MobileCatalog() {
             key={type === 'anime' ? item.mal_id : item.id}
             onClick={() => {
               if (type === 'anime') {
-                // Handle anime click
+                openAnimeModal(item.mal_id);
               } else {
                 openModal(item.id, type);
               }
@@ -111,10 +114,17 @@ export default function MobileCatalog() {
   );
 
   return (
-    <div style={{ padding: '1rem' }}>
-      {renderSection('Filmes Populares', movies, 'movie')}
-      {renderSection('Séries Premiadas', series, 'tv')}
-      {renderSection('Anime Japonês', animes, 'anime')}
-    </div>
+    <>
+      <div style={{ padding: '1rem' }}>
+        {renderSection('Filmes Populares', movies, 'movie')}
+        {renderSection('Séries Premiadas', series, 'tv')}
+        {renderSection('Anime Japonês', animes, 'anime')}
+      </div>
+      <AnimeModal 
+        isOpen={isAnimeModalOpen} 
+        animeId={selectedAnimeId} 
+        onClose={closeAnimeModal} 
+      />
+    </>
   );
 }
