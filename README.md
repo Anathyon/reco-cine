@@ -42,6 +42,7 @@ Interface elegante com design dark theme, cards interativos e navegação intuit
 | [Tailwind CSS 4](https://tailwindcss.com/) | Framework CSS utilitário para estilização rápida e consistente |
 | [Zustand](https://zustand-demo.pmnd.rs/) | Gerenciamento de estado leve e performático |
 | [Framer Motion](https://www.framer.com/motion/) | Biblioteca de animações declarativas para React |
+| [Jest](https://jestjs.io/) | Framework de testes unitários e de integração |
 | [PWA](https://web.dev/progressive-web-apps/) | Service Worker para funcionalidade offline e instalação |
 
 ---
@@ -105,6 +106,12 @@ npm start
 
 # Execute os testes
 npm test
+
+# Execute os testes em modo watch
+npm run test:watch
+
+# Execute os testes com coverage
+npm run test:coverage
 ```
 
 ---
@@ -118,6 +125,7 @@ npm test
 - ✅ **Code Splitting** automático
 - ✅ **PWA** com cache offline
 - ✅ **SEO Otimizado** com meta tags dinâmicas
+- ✅ **Testes Automatizados** com Jest e Testing Library
 
 ---
 

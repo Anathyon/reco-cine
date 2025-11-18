@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['image.tmdb.org', 'cdn.myanimelist.net'],
   },
+  
+  outputFileTracingRoot: __dirname,
 };
 
 export default nextConfig;

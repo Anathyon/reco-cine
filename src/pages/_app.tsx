@@ -10,11 +10,9 @@ import { useEffect } from 'react';
 import { testPWAFeatures } from '../utils/pwaTest';
 import { debugPWA } from '../utils/pwaDebug';
 import { useAnimeModalStore } from '../store/animeModalStore';
-import { useModalStore } from '../store/modalStore';
 
 export default function App({ Component, pageProps }: AppProps) {
   const { isOpen: animeModalOpen, selectedId: animeId, closeModal: closeAnimeModal } = useAnimeModalStore();
-  const { isOpen: movieModalOpen, selectedId: movieId, selectedType, closeModal: closeMovieModal } = useModalStore();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,7 +59,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Footer />
         <InstallPWA />
         <AnimeModal isOpen={animeModalOpen} animeId={animeId} onClose={closeAnimeModal} />
-        <MovieModal isOpen={movieModalOpen} movieId={movieId} type={selectedType} onClose={closeMovieModal} />
+        <MovieModal />
       </div>
     </>
   );
