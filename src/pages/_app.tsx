@@ -3,12 +3,19 @@ import type { AppProps } from 'next/app';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import InstallPWA from '../components/InstallPWA';
+import AnimeModal from '../components/AnimeModal';
+import MovieModal from '../components/MovieModal';
 import Head from 'next/head';
 import { useEffect } from 'react';
 import { testPWAFeatures } from '../utils/pwaTest';
 import { debugPWA } from '../utils/pwaDebug';
+import { useAnimeModalStore } from '../store/animeModalStore';
+import { useModalStore } from '../store/modalStore';
 
 export default function App({ Component, pageProps }: AppProps) {
+  const { isOpen: animeModalOpen, selectedId: animeId, closeModal: closeAnimeModal } = useAnimeModalStore();
+  const { isOpen: movieModalOpen, selectedId: movieId, selectedType, closeModal: closeMovieModal } = useModalStore();
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if ('serviceWorker' in navigator) {
@@ -53,6 +60,8 @@ export default function App({ Component, pageProps }: AppProps) {
         </main>
         <Footer />
         <InstallPWA />
+        <AnimeModal isOpen={animeModalOpen} animeId={animeId} onClose={closeAnimeModal} />
+        <MovieModal isOpen={movieModalOpen} movieId={movieId} type={selectedType} onClose={closeMovieModal} />
       </div>
     </>
   );
