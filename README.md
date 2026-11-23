@@ -1,131 +1,98 @@
-# 🎬 Recomendações Cinematográficas
+# 🎬 Reco Cine
 
-Uma aplicação web moderna e elegante para descobrir filmes, séries e animes com recomendações personalizadas e interface responsiva.
-
-> 🚀 Um projeto que une **design responsivo**, performance e usabilidade com as melhores práticas de desenvolvimento frontend.
+Descubra filmes, séries e animes, assista aos trailers, veja **onde assistir no Brasil** e monte a sua lista — tudo numa interface rápida, responsiva e instalável (PWA).
 
 ---
 
-## 📌 Funcionalidades Principais
+## 📌 Funcionalidades
 
-- ✅ **Catálogo Completo** de filmes, séries e animes populares
-- ✅ **Sistema de Busca Avançada** com filtros por gênero
-- ✅ **Modais Interativos** com detalhes completos de cada título
-- ✅ **Sistema de Favoritos** com armazenamento local
-- ✅ **PWA (Progressive Web App)** - instalável como app nativo
-- ✅ **Interface Responsiva** adaptada para **mobile, tablet e desktop**
-- ✅ **Animações Fluidas** com Framer Motion
-- ✅ **Performance Otimizada** com lazy loading e cache inteligente
-
----
-
-## ✨ Experiência Visual Moderna
-
-Interface elegante com design dark theme, cards interativos e navegação intuitiva. Cada seção (filmes, séries, animes) mantém consistência visual com hover effects e transições suaves.
-
-**Principais Seções:**
-- **Home:** Catálogo unificado com destaques de cada categoria
-- **Filmes:** Exploração completa do cinema com filtros por gênero
-- **Séries:** Descoberta de séries populares e bem avaliadas
-- **Animes:** Integração com MyAnimeList para conteúdo anime
-- **Favoritos:** Gerenciamento pessoal de títulos salvos
-- **Busca:** Sistema de pesquisa global com resultados em tempo real
+- **Início com destaques**: banner rotativo da semana e fileiras de tendências, populares, nos cinemas, aclamados e animes da temporada (carregadas sob demanda ao rolar).
+- **Catálogos de Filmes, Séries e Animes** com filtros por gênero, ano e **serviço de streaming no Brasil** (Netflix, Prime Video...), ordenação, rolagem infinita e botão **“Surpreenda-me”**. Os filtros ficam na URL.
+- **Detalhes completos** em um único modal: trailer embutido, sinopse, elenco, ficha técnica, plataformas de streaming no Brasil (JustWatch via TMDB) e recomendações relacionadas.
+- **Página própria para cada título** (`/title/movie/550`), gerada no servidor, com prévia (Open Graph) ao compartilhar no WhatsApp, Telegram e redes sociais.
+- **Modal na URL** (`?view=movie-550`): o botão “voltar” do celular fecha o modal. Ctrl/Cmd+clique num card abre a página do título em outra aba.
+- **Animes com personagens e dubladores** (MyAnimeList).
+- **Busca ao vivo** em filmes, séries e animes ao mesmo tempo, com sugestões quando o campo está vazio.
+- **Minha lista**: favoritos salvos no dispositivo, com filtros, ordenação e opção de desfazer. Para levar a outro aparelho: **link de compartilhamento** (`/favorites?lista=m550.t1396`) ou **backup em arquivo** (exportar/importar).
+- **Mobile first**: navegação inferior no celular, áreas de toque generosas, skeletons de carregamento.
+- **Acessibilidade**: navegação por teclado, foco visível, `Esc` fecha o modal, suporte a `prefers-reduced-motion`.
+- **PWA**: instalável, com cache de imagens e respostas para uso offline.
+- **Página inicial pré-renderizada (ISR)**: o destaque e a primeira fileira já chegam no HTML e são atualizados a cada hora.
 
 ---
 
-## 🧪 Tecnologias e Arquitetura
+## 🧪 Tecnologias
 
-| Tecnologia | Descrição |
-|------------|----------|
-| [Next.js 15](https://nextjs.org/) | Framework React com SSR, otimização automática e roteamento |
-| [TypeScript](https://www.typescriptlang.org/) | Tipagem estática para código mais robusto e manutenível |
-| [Tailwind CSS 4](https://tailwindcss.com/) | Framework CSS utilitário para estilização rápida e consistente |
-| [Zustand](https://zustand-demo.pmnd.rs/) | Gerenciamento de estado leve e performático |
-| [Framer Motion](https://www.framer.com/motion/) | Biblioteca de animações declarativas para React |
-| [Jest](https://jestjs.io/) | Framework de testes unitários e de integração |
-| [PWA](https://web.dev/progressive-web-apps/) | Service Worker para funcionalidade offline e instalação |
+| Tecnologia | Uso |
+|------------|-----|
+| [Next.js 15](https://nextjs.org/) (Pages Router) | Roteamento, rota de API (proxy do TMDB) e build |
+| [TypeScript](https://www.typescriptlang.org/) | Tipagem estática |
+| [Tailwind CSS 3](https://tailwindcss.com/) | Estilização e design system (tema em `tailwind.config.js`) |
+| [Zustand](https://zustand-demo.pmnd.rs/) | Estado global (favoritos persistidos, toasts) |
+| [Framer Motion](https://www.framer.com/motion/) | Animações do modal, banner e toasts |
 
----
+### Estrutura
 
-## 📊 Integração com APIs Externas
-
-**APIs Utilizadas:**
-- **[TMDB API](https://www.themoviedb.org/documentation/api)** - Base de dados completa de filmes e séries
-- **[Jikan API](https://jikan.moe/)** - Interface não-oficial do MyAnimeList para dados de anime
-
-**Recursos das APIs:**
-- Catálogos populares e bem avaliados
-- Detalhes completos (sinopse, elenco, avaliações)
-- Imagens em alta qualidade (posters e backdrops)
-- Sistema de busca com filtros avançados
-
----
-
-## 🚀 Deploy e Hospedagem
-
-### Pré-requisitos
-- Conta no [TMDB](https://www.themoviedb.org/settings/api) para obter API key
-- Conta na [Vercel](https://vercel.com) para deploy
-
-### Variáveis de Ambiente
-```env
-NEXT_PUBLIC_TMDB_API_KEY=your_tmdb_api_key_here
-NEXT_PUBLIC_JIKAN_BASE_URL=https://api.jikan.moe/v4
+```
+src/
+  components/     layout (Header, BottomNav, Footer), media (cards, fileiras, grade, modal) e ui
+  hooks/          useQuery (cache), useInfiniteList, useDetailsRoute, useDebounce, useInView
+  lib/            clientes TMDB e Jikan normalizados para um formato único (MediaItem);
+                  *Server.ts só rodam no servidor (leem a chave)
+  pages/          páginas, title/[type]/[id] (página do título) e api/tmdb/[...path].ts (proxy)
+e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
+  store/          favoritos e toasts
 ```
 
-### Deploy Automático na Vercel
-1. **Fork/Clone** o repositório
-2. **Conecte** à Vercel via GitHub
-3. **Configure** as variáveis de ambiente
-4. **Deploy** automático detectado como projeto Next.js
+---
+
+## 📊 APIs
+
+- **[TMDB](https://developer.themoviedb.org/)** — filmes e séries (em pt-BR). As chamadas passam pela rota `/api/tmdb/*`, então **a chave fica só no servidor** e as respostas são cacheadas na CDN.
+- **[Jikan](https://jikan.moe/)** (MyAnimeList) — animes. As requisições passam por uma fila para respeitar o limite de ~3 req/s.
 
 ---
 
-## 🛠️ Desenvolvimento Local
+## 🚀 Deploy na Vercel
+
+Variáveis de ambiente (veja `.env.example`):
+
+| Variável | Obrigatória | Valor |
+|----------|-------------|-------|
+| `NEXT_PUBLIC_TMDB_API_KEY` (ou `TMDB_API_KEY`) | ✅ | Chave v3 do TMDB |
+| `NEXT_PUBLIC_TMDB_BASE_URL` | | `https://api.themoviedb.org/3` |
+| `NEXT_PUBLIC_TMDB_IMAGE_BASE` | | `https://image.tmdb.org/t/p` |
+| `NEXT_PUBLIC_JIKAN_BASE_URL` | | `https://api.jikan.moe/v4` |
+| `NEXT_PUBLIC_SITE_URL` | | URL pública do site, para os links das prévias. Na Vercel é detectada automaticamente. |
+
+> Apesar do prefixo `NEXT_PUBLIC_`, a chave do TMDB só é lida pela rota de API e não vai para o navegador. Para deixar isso explícito, você pode renomeá-la para `TMDB_API_KEY`.
+
+---
+
+## 🛠️ Desenvolvimento local
 
 ```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/recomendacoes-cine.git
-cd recomendacoes-cine
-
-# Instale as dependências
 npm install
-
-# Configure as variáveis de ambiente
-cp .env.example .env.local
-# Edite .env.local com suas API keys
-
-# Execute em modo desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Execute a versão de produção
-npm start
-
-# Execute os testes
-npm test
-
-# Execute os testes em modo watch
-npm run test:watch
-
-# Execute os testes com coverage
-npm run test:coverage
+cp .env.example .env.local   # preencha a chave do TMDB
+npm run dev                  # http://localhost:3000
+npm run build && npm start   # versão de produção
 ```
 
----
+### Testes e qualidade
 
-## 🎯 Performance e Otimizações
+```bash
+npm test                 # testes unitários (Jest + Testing Library)
+npm run test:coverage    # com relatório de cobertura
+npm run check            # tipos + lint + testes (rode antes de cada push)
 
-- ✅ **Build Otimizado** (< 150kB First Load JS)
-- ✅ **Imagens Responsivas** com Next.js Image
-- ✅ **Lazy Loading** para componentes e imagens
-- ✅ **Cache Inteligente** para requisições de API
-- ✅ **Code Splitting** automático
-- ✅ **PWA** com cache offline
-- ✅ **SEO Otimizado** com meta tags dinâmicas
-- ✅ **Testes Automatizados** com Jest e Testing Library
+npx playwright install chromium   # uma vez
+npm run test:e2e         # testes de ponta a ponta (desktop e celular)
+npm run test:e2e:ui      # modo visual, para depurar
+```
+
+- **Unitários** (Jest): pastas `__tests__` ao lado do código.
+- **Ponta a ponta** (Playwright): pasta `e2e/`. Todas as APIs são simuladas em `e2e/mocks.ts`, então não precisam de chave nem de internet.
+- **CI** (GitHub Actions, `.github/workflows/ci.yml`): a cada push e pull request roda tipos, lint, testes unitários, build e testes de ponta a ponta.
 
 ---
 

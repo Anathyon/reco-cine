@@ -10,19 +10,21 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Ignorados globais: precisam ficar num objeto só com `ignores`.
+  {
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts", "public/sw.js"],
+  },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
-    ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
     },
+  },
+  {
+    // Scripts Node em CommonJS.
+    files: ["*.js", "scripts/**/*.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
 ];
 
