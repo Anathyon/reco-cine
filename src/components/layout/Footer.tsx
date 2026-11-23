@@ -1,114 +1,50 @@
+import Link from 'next/link';
+import { LogoMark } from '../ui/Icons';
+import { NAV_ITEMS } from './nav';
+
 export default function Footer() {
   return (
-    <footer style={{
-      background: 'linear-gradient(135deg, #0f1724 0%, #1a2332 100%)',
-      borderTop: '1px solid #2a3441',
-      padding: '32px 0',
-      marginTop: '48px'
-    }}>
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
-        padding: '0 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '6px',
-            background: 'linear-gradient(135deg, #3b82f6, #ec4899)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '16px'
-          }}>
-            🎞
-          </div>
-          <span style={{ 
-            fontSize: '18px', 
-            fontWeight: 600, 
-            color: '#e6eef8' 
-          }}>
-            CineExplorer
-          </span>
+    <footer className="mt-20 border-t border-white/5 bg-ink-900/60">
+      <div className="container-page flex flex-col gap-8 py-10 md:flex-row md:items-start md:justify-between">
+        <div className="max-w-sm">
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <LogoMark size={28} />
+            <span className="font-display text-base font-bold text-white">
+              Reco<span className="text-brand-300">Cine</span>
+            </span>
+          </Link>
+          <p className="mt-3 text-sm text-zinc-400">
+            Descubra filmes, séries e animes, veja onde assistir e monte a sua lista.
+          </p>
         </div>
-        
-        <p style={{ 
-          color: '#94a3b8', 
-          margin: 0, 
-          fontSize: '14px',
-          textAlign: 'center'
-        }}>
-          © {new Date().getFullYear()} CineExplorer. Todos os direitos reservados.
-        </p>
-        
-        <div style={{ 
-          display: 'flex', 
-          gap: '24px', 
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}>
-          <a 
-            href="/privacy" 
-            style={{ 
-              color: '#94a3b8', 
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#e6eef8'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
-          >
-            Política de Privacidade
-          </a>
-          <span style={{ color: '#3a4553' }}>•</span>
-          <a 
-            href="/terms" 
-            style={{ 
-              color: '#94a3b8', 
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#e6eef8'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
-          >
-            Termos de Serviço
-          </a>
-          <span style={{ color: '#3a4553' }}>•</span>
-          <a 
-            href="/contact" 
-            style={{ 
-              color: '#94a3b8', 
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#e6eef8'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
-          >
-            Contato
-          </a>
-        </div>
-        
-        <div style={{ 
-          display: 'flex', 
-          gap: '16px', 
-          alignItems: 'center',
-          marginTop: '8px'
-        }}>
-          <span style={{ 
-            fontSize: '12px', 
-            color: '#64748b',
-            textAlign: 'center'
-          }}>
-            Feito com ❤️ para amantes de cinema e séries
-          </span>
+
+        <nav aria-label="Rodapé">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {[...NAV_ITEMS, { href: '/search', label: 'Buscar' }].map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} className="text-zinc-400 transition hover:text-white">
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <div className="border-t border-white/5">
+        <div className="container-page flex flex-col gap-2 py-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Reco Cine</p>
+          <p>
+            Dados de filmes e séries por{' '}
+            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white">
+              TMDB
+            </a>{' '}
+            e de animes por{' '}
+            <a href="https://jikan.moe" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white">
+              Jikan/MyAnimeList
+            </a>
+            . Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.
+          </p>
         </div>
       </div>
     </footer>

@@ -1,165 +1,79 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useFavoritesStore } from '../../store/favoritesStore';
+import { LogoMark, SearchIcon } from '../ui/Icons';
+import { NAV_ITEMS } from './nav';
 
-const NAV_ITEMS = [
-  { href: '/', label: 'Início' },
-  { href: '/movies', label: 'Filmes' },
-  { href: '/series', label: 'Séries' },
-  { href: '/animes', label: 'Animes' },
-  { href: '/search', label: 'Buscar' },
-  { href: '/favorites', label: 'Favoritos' },
-];
-
-export default function Header() {
+export default function Header({ transparent }: { transparent?: boolean }) {
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const favoritesCount = useFavoritesStore((s) => Object.keys(s.items).length);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const solid = !transparent || scrolled;
 
   return (
-    <>
-      <header style={{
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-        backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid #334155',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '4rem',
-        }}>
-          {/* Logo */}
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
-                width: '2.5rem',
-                height: '2.5rem',
-                borderRadius: '0.5rem',
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.25rem',
-              }}>
-                🎬
-              </div>
-              <span style={{
-                fontSize: '1.25rem',
-                fontWeight: 'bold',
-                color: '#f1f5f9',
-              }}>
-                Cine Explorer
-              </span>
-            </div>
-          </Link>
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+        solid ? 'border-b border-white/5 bg-ink-950/85 backdrop-blur-xl' : 'bg-gradient-to-b from-black/70 to-transparent'
+      }`}
+    >
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn-primary">
+        Pular para o conteúdo
+      </a>
+      <div className="container-page flex h-16 items-center gap-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label="Reco Cine — página inicial">
+          <LogoMark size={32} />
+          <span className="font-display text-lg font-bold tracking-tight text-white">
+            Reco<span className="text-brand-300">Cine</span>
+          </span>
+        </Link>
 
-          {/* Desktop Navigation */}
-          <nav style={{ display: 'none' }} className="desktop-nav">
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              {NAV_ITEMS.map(item => {
-                const isActive = router.pathname === item.href;
-                return (
+        <nav className="hidden flex-1 md:block" aria-label="Principal">
+          <ul className="flex items-center gap-1">
+            {NAV_ITEMS.map(({ href, label }) => {
+              const active = router.pathname === href;
+              return (
+                <li key={href}>
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '0.375rem',
-                      color: isActive ? '#f1f5f9' : '#cbd5e1',
-                      backgroundColor: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                      textDecoration: 'none',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      transition: 'all 0.2s',
-                    }}
+                    href={href}
+                    aria-current={active ? 'page' : undefined}
+                    className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition ${
+                      active ? 'text-white' : 'text-zinc-400 hover:text-white'
+                    }`}
                   >
-                    {item.label}
+                    {label}
+                    {href === '/favorites' && favoritesCount > 0 && (
+                      <span className="ml-1.5 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                        {favoritesCount}
+                      </span>
+                    )}
+                    {active && <span className="absolute inset-x-3.5 -bottom-[1px] h-0.5 rounded-full bg-brand-400" />}
                   </Link>
-                );
-              })}
-            </div>
-          </nav>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              display: 'block',
-              padding: '0.5rem',
-              borderRadius: '0.375rem',
-              backgroundColor: '#1e293b',
-              border: 'none',
-              color: '#cbd5e1',
-              cursor: 'pointer',
-            }}
-            className="mobile-menu-btn"
-          >
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '4rem',
-            left: 0,
-            right: 0,
-            backgroundColor: '#0f172a',
-            borderBottom: '1px solid #334155',
-            zIndex: 40,
-            padding: '1rem',
-          }}
-          className="mobile-menu"
+        <Link
+          href="/search"
+          aria-label="Buscar"
+          className={`ml-auto flex items-center gap-2 rounded-full px-3 py-2 text-sm text-zinc-300 transition hover:text-white md:ml-0 md:w-56 md:border md:border-white/10 md:bg-white/5 md:hover:bg-white/10 ${
+            router.pathname === '/search' ? 'text-white md:border-white/25' : ''
+          }`}
         >
-          <nav>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {NAV_ITEMS.map(item => {
-                const isActive = router.pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    style={{
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.375rem',
-                      color: isActive ? '#f1f5f9' : '#cbd5e1',
-                      backgroundColor: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                      textDecoration: 'none',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-        </div>
-      )}
-
-      <style jsx>{`
-        @media (min-width: 768px) {
-          .desktop-nav {
-            display: block !important;
-          }
-          .mobile-menu-btn {
-            display: none !important;
-          }
-        }
-      `}</style>
-    </>
+          <SearchIcon size={20} />
+          <span className="hidden md:inline">Buscar títulos…</span>
+        </Link>
+      </div>
+    </header>
   );
 }

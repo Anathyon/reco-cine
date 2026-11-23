@@ -1,45 +1,24 @@
 {
-  "name": "Reco Cine - Recomendações de Filmes e Séries",
+  "name": "Reco Cine — filmes, séries e animes",
   "short_name": "Reco Cine",
-  "description": "Descubra os melhores filmes, séries e animes com recomendações personalizadas. Acesso offline e experiência nativa.",
+  "description": "Descubra filmes, séries e animes, veja trailers, onde assistir no Brasil e monte a sua lista.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0f172a",
-  "theme_color": "#3b82f6",
+  "background_color": "#07070b",
+  "theme_color": "#07070b",
   "categories": ["entertainment", "movies", "lifestyle"],
   "lang": "pt-BR",
   "dir": "ltr",
   "icons": [
-    {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    {
-      "name": "Filmes",
-      "url": "/movies",
-      "icons": [{"src": "/icon-192x192.png", "sizes": "192x192"}]
-    },
-    {
-      "name": "Séries", 
-      "url": "/series",
-      "icons": [{"src": "/icon-192x192.png", "sizes": "192x192"}]
-    },
-    {
-      "name": "Favoritos",
-      "url": "/favorites", 
-      "icons": [{"src": "/icon-192x192.png", "sizes": "192x192"}]
-    }
+    { "name": "Buscar", "url": "/search", "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }] },
+    { "name": "Filmes", "url": "/movies", "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }] },
+    { "name": "Séries", "url": "/series", "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }] },
+    { "name": "Minha lista", "url": "/favorites", "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }] }
   ]
 }

@@ -1,152 +1,130 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import useFavoritesStore from '../store/favoritesStore';
-import MovieCard from '../components/MovieCard';
-import MovieModal from '../components/MovieModal';
-import AnimeModal from '../components/AnimeModal';
-import { useModalStore } from '../store/modalStore';
+import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { useMemo, useState } from 'react';
+import { ListToolbar, SharedListBanner } from '../components/ListTransfer';
+import { decodeRefs } from '../lib/listTransfer';
+import type { MediaType } from '../types';
+import { GRID_CLASS } from '../components/media/MediaGrid';
+import MediaCard, { MediaCardSkeleton } from '../components/media/MediaCard';
+import { EmptyState } from '../components/ui/States';
+import { HeartIcon } from '../components/ui/Icons';
+import { useFavoritesStore, type FavoriteItem } from '../store/favoritesStore';
 
-interface FavoriteItem {
-  id: number;
-  title: string;
-  overview: string;
-  poster_path: string;
-  release_date: string;
-  vote_average: number;
-  genre_ids: number[];
-  type: 'movie' | 'tv' | 'anime';
-}
+type Filter = 'all' | MediaType;
+type Sort = 'recent' | 'rating' | 'title';
 
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'all', label: 'Tudo' },
+  { key: 'movie', label: 'Filmes' },
+  { key: 'tv', label: 'Séries' },
+  { key: 'anime', label: 'Animes' },
+];
 
+const SORTERS: Record<Sort, (a: FavoriteItem, b: FavoriteItem) => number> = {
+  recent: (a, b) => b.addedAt - a.addedAt,
+  rating: (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
+  title: (a, b) => a.title.localeCompare(b.title, 'pt-BR'),
+};
 
 export default function FavoritesPage() {
-  const { favorites } = useFavoritesStore();
-  const { openModal } = useModalStore();
-  const [selectedAnimeId, setSelectedAnimeId] = useState<number | null>(null);
-  const [isAnimeModalOpen, setIsAnimeModalOpen] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'movie' | 'tv' | 'anime'>('all');
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const filteredFavorites = useMemo(() => 
-    filter === 'all' ? favorites : favorites.filter((item: FavoriteItem) => item.type === filter),
-    [favorites, filter]
-  );
-
-  const handleItemClick = useCallback((item: FavoriteItem) => {
-    if (item.type === 'anime') {
-      setSelectedAnimeId(item.id);
-      setIsAnimeModalOpen(true);
-    } else {
-      openModal(item.id, item.type === 'tv' ? 'tv' : 'movie');
-    }
-  }, [openModal]);
-
-  const renderItem = (item: FavoriteItem) => {
-    if (item.type === 'anime') {
-      return (
-        <div 
-          key={item.id}
-          style={{ background: '#0f1724', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' }}
-          onClick={() => handleItemClick(item)}
-        >
-          <div style={{ height: '270px', background: '#0b1220', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {item.poster_path ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img 
-                src={item.poster_path} 
-                alt={item.title} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              />
-            ) : (
-              <div style={{ color: '#94a3b8' }}>Sem imagem</div>
-            )}
-          </div>
-          <div style={{ padding: '12px' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#e6eef8', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {item.title}
-            </h3>
-            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>
-              {item.vote_average ? `⭐ ${item.vote_average}` : 'Sem nota'} • Anime
-            </p>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <MovieCard 
-        key={item.id} 
-        item={item} 
-        onClick={() => handleItemClick(item)} 
-      />
-    );
+  const router = useRouter();
+  const sharedRefs = useMemo(() => decodeRefs(router.query.lista), [router.query.lista]);
+  const closeShared = () => {
+    const { lista: _lista, ...rest } = router.query;
+    router.replace({ pathname: '/favorites', query: rest }, undefined, { shallow: true, scroll: false });
   };
+  const items = useFavoritesStore((s) => s.items);
+  const hydrated = useFavoritesStore((s) => s.hydrated);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [sort, setSort] = useState<Sort>('recent');
+
+  const all = useMemo(() => Object.values(items), [items]);
+  const visible = useMemo(
+    () => all.filter((i) => filter === 'all' || i.type === filter).sort(SORTERS[sort]),
+    [all, filter, sort],
+  );
+  const count = (f: Filter) => (f === 'all' ? all.length : all.filter((i) => i.type === f).length);
 
   return (
-    <div style={{ maxWidth: '75rem', margin: '0 auto', padding: 'clamp(1rem, 3vw, 1.5rem)' }}>
-      <MovieModal />
-      <AnimeModal 
-        isOpen={isAnimeModalOpen} 
-        animeId={selectedAnimeId} 
-        onClose={() => setIsAnimeModalOpen(false)} 
-      />
-      
-      <div style={{ marginBottom: 'clamp(1rem, 3vw, 1.5rem)' }}>
-        <h1 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.375rem)', fontWeight: 700, margin: 0 }}>Favoritos</h1>
-        <p style={{ color: '#94a3b8', marginTop: '0.375rem', fontSize: 'clamp(0.875rem, 2.5vw, 1rem)' }}>Seus filmes, séries e animes favoritos</p>
-        
-        <div style={{ marginTop: 'clamp(0.75rem, 2vw, 1rem)', display: 'flex', gap: 'clamp(0.375rem, 1.5vw, 0.5rem)', flexWrap: 'wrap' }}>
-          {[{key: 'all', label: 'Todos'}, {key: 'movie', label: 'Filmes'}, {key: 'tv', label: 'Séries'}, {key: 'anime', label: 'Animes'}].map(({key, label}) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key as 'all' | 'movie' | 'tv' | 'anime')}
-              style={{
-                padding: 'clamp(0.375rem, 1.5vw, 0.5rem) clamp(0.5rem, 2vw, 0.75rem)',
-                background: filter === key ? '#3b82f6' : 'rgba(255,255,255,0.06)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {label} ({key === 'all' ? favorites.length : favorites.filter((item: FavoriteItem) => item.type === key).length})
-            </button>
-          ))}
-        </div>
-      </div>
+    <>
+      <Head>
+        <title>Minha lista — Reco Cine</title>
+      </Head>
 
-      {filteredFavorites.length === 0 ? (
-        <div style={{ padding: 48, textAlign: 'center', color: '#94a3b8' }}>
-          {filter === 'all' ? 'Nenhum favorito adicionado ainda' : `Nenhum ${filter === 'movie' ? 'filme' : filter === 'tv' ? 'série' : 'anime'} favorito`}
+      <div className="container-page pt-8 sm:pt-12">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="page-title">Minha lista</h1>
+            <p className="mt-2 text-zinc-400">
+              Fica salva neste aparelho. Use “Compartilhar lista” para abrir no celular ou em outro computador.
+            </p>
+          </div>
+          {hydrated && <ListToolbar items={Object.values(items).sort(SORTERS.recent)} />}
         </div>
-      ) : (
-        <div style={{ 
-          display: isMobile ? 'flex' : 'grid',
-          gridTemplateColumns: isMobile ? 'none' : 'repeat(auto-fill, minmax(min(10rem, 100%), 1fr))',
-          overflowX: isMobile ? 'auto' : 'visible',
-          gap: isMobile ? '0.75rem' : 'clamp(0.75rem, 2vw, 1rem)',
-          paddingBottom: isMobile ? '0.5rem' : '0',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
-        }}>
-          {filteredFavorites.map((item) => (
-            <div key={item.id} style={{ 
-              minWidth: isMobile ? '7.5rem' : 'auto',
-              width: isMobile ? '7.5rem' : 'auto'
-            }}>
-              {renderItem(item)}
+
+        {hydrated && sharedRefs.length > 0 && <SharedListBanner refs={sharedRefs} onClose={closeShared} />}
+
+        {!hydrated ? (
+          <div className={`${GRID_CLASS} mt-8`}>
+            {Array.from({ length: 7 }, (_, i) => (
+              <MediaCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : all.length === 0 ? (
+          <div className="mt-8">
+            <EmptyState
+              icon={<HeartIcon size={26} />}
+              title="Sua lista está vazia"
+              description="Toque no coração de qualquer filme, série ou anime para salvar e assistir depois."
+              action={
+                <Link href="/" className="btn-brand">
+                  Explorar títulos
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="no-scrollbar flex gap-2 overflow-x-auto" role="tablist" aria-label="Filtrar lista">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    role="tab"
+                    aria-selected={filter === f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`chip ${filter === f.key ? 'chip-active' : ''}`}
+                  >
+                    {f.label}
+                    <span className={filter === f.key ? 'text-ink-950/60' : 'text-zinc-500'}>{count(f.key)}</span>
+                  </button>
+                ))}
+              </div>
+              <select
+                aria-label="Ordenar lista"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as Sort)}
+                className="h-10 cursor-pointer rounded-full border border-white/10 bg-ink-850 px-4 text-sm text-white"
+              >
+                <option value="recent">Adicionados recentemente</option>
+                <option value="rating">Melhor avaliados</option>
+                <option value="title">Título (A–Z)</option>
+              </select>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+
+            {visible.length === 0 ? (
+              <p className="py-16 text-center text-zinc-400">Nenhum item nesta categoria ainda.</p>
+            ) : (
+              <div className={`${GRID_CLASS} mt-6`}>
+                {visible.map((item) => (
+                  <MediaCard key={`${item.type}-${item.id}`} item={item} showType={filter === 'all'} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 }

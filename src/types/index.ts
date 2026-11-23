@@ -1,21 +1,47 @@
-export interface Movie {
+export type MediaType = 'movie' | 'tv' | 'anime';
+
+/** Formato único usado pela interface para filmes, séries e animes. */
+export interface MediaItem {
   id: number;
+  type: MediaType;
   title: string;
+  poster: string | null;
+  backdrop: string | null;
+  year: string | null;
+  rating: number | null;
   overview: string;
-  release_date: string;
-  vote_average: number;
-  poster_path: string;
-  genre_ids: number[];
 }
 
-export interface Series {
+export interface CastMember {
   id: number;
   name: string;
-  overview: string;
-  first_air_date: string;
-  vote_average: number;
-  poster_path: string;
-  genre_ids: number[];
+  role: string;
+  photo: string | null;
+}
+
+export interface Provider {
+  name: string;
+  logo: string | null;
+  url?: string;
+}
+
+export interface MediaDetails extends MediaItem {
+  originalTitle: string | null;
+  tagline: string | null;
+  genres: string[];
+  facts: { label: string; value: string }[];
+  cast: CastMember[];
+  trailerKey: string | null;
+  providers: Provider[];
+  providersLink: string | null;
+  externalUrl: string;
+  externalLabel: string;
+}
+
+export interface Page<T> {
+  items: T[];
+  page: number;
+  hasMore: boolean;
 }
 
 export interface Genre {
@@ -23,7 +49,8 @@ export interface Genre {
   name: string;
 }
 
-export interface Favorite {
-  id: number;
-  type: 'movie' | 'series';
-}
+export const TYPE_LABEL: Record<MediaType, string> = {
+  movie: 'Filme',
+  tv: 'Série',
+  anime: 'Anime',
+};

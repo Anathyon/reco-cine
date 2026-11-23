@@ -1,99 +1,63 @@
-const CACHE_VERSION = 'v4';
+/* Service worker do Reco Cine: cache de imagens e de respostas de API para uso offline. */
+const CACHE_VERSION = 'v5';
 const API_CACHE = `reco-cine-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `reco-cine-images-${CACHE_VERSION}`;
-const STATIC_CACHE = `reco-cine-static-${CACHE_VERSION}`;
+const MAX_IMAGES = 400;
 
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  self.skipWaiting();
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!cacheName.includes(CACHE_VERSION)) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker activated and claiming clients');
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((n) => !n.endsWith(CACHE_VERSION)).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim()),
   );
 });
 
+async function trimCache(name, max) {
+  const cache = await caches.open(name);
+  const keys = await cache.keys();
+  if (keys.length > max) await Promise.all(keys.slice(0, keys.length - max).map((k) => cache.delete(k)));
+}
+
+// API: rede primeiro, cache como reserva offline.
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(API_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+// Imagens: cache primeiro (não mudam), rede como reserva.
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok || response.type === 'opaque') {
+    const cache = await caches.open(IMAGE_CACHE);
+    await cache.put(request, response.clone());
+    trimCache(IMAGE_CACHE, MAX_IMAGES);
+  }
+  return response;
+}
+
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-  
-  // Only handle external API requests
-  if (url.hostname === 'api.themoviedb.org' || url.hostname === 'api.jikan.moe') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(API_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request);
-        })
-    );
-  } else if (url.hostname === 'image.tmdb.org') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(IMAGE_CACHE).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request);
-        })
-    );
-  }
-  // Don't intercept any other requests - let Next.js handle them
-});
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(
-      // Handle offline actions when back online
-      console.log('Background sync triggered')
-    );
-  }
-});
-
-// Push notifications (for future use)
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body,
-      icon: '/icon-192x192.png',
-      badge: '/icon-192x192.png',
-      vibrate: [100, 50, 100],
-      data: {
-        dateOfArrival: Date.now(),
-        primaryKey: data.primaryKey
-      }
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
+  if ((url.origin === self.location.origin && url.pathname.startsWith('/api/tmdb/')) || url.hostname === 'api.jikan.moe') {
+    event.respondWith(networkFirst(request));
+  } else if (url.hostname === 'image.tmdb.org' || url.hostname === 'cdn.myanimelist.net') {
+    event.respondWith(cacheFirst(request));
   }
 });
