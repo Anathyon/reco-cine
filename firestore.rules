@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Cada pessoa só lê e escreve a própria lista:
+//   users/{uid}/favorites/{tipo-id}
+// Publique com `npx firebase-tools deploy --only firestore:rules`
+// ou cole este arquivo em Firebase Console → Firestore → Regras.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function optionalString(d, field, max) {
+      return !(field in d) || d[field] == null || (d[field] is string && d[field].size() <= max);
+    }
+
+    function validFavorite(d, favId) {
+      return d.keys().hasAll(['id', 'type', 'title', 'addedAt'])
+        && d.keys().hasOnly(['id', 'type', 'title', 'poster', 'backdrop', 'year', 'rating', 'overview', 'addedAt'])
+        && d.id is int && d.id > 0
+        && d.type in ['movie', 'tv', 'anime']
+        && favId == d.type + '-' + string(d.id)
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 300
+        && d.addedAt is number
+        && optionalString(d, 'poster', 500)
+        && optionalString(d, 'backdrop', 500)
+        && optionalString(d, 'year', 10)
+        && optionalString(d, 'overview', 5000)
+        && (!('rating' in d) || d.rating == null || d.rating is number);
+    }
+
+    match /users/{uid}/favorites/{favId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validFavorite(request.resource.data, favId);
+    }
+
+    // Todo o resto fica fechado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -13,7 +13,8 @@ Descubra filmes, séries e animes, assista aos trailers, veja **onde assistir no
 - **Modal na URL** (`?view=movie-550`): o botão “voltar” do celular fecha o modal. Ctrl/Cmd+clique num card abre a página do título em outra aba.
 - **Animes com personagens e dubladores** (MyAnimeList).
 - **Busca ao vivo** em filmes, séries e animes ao mesmo tempo, com sugestões quando o campo está vazio.
-- **Minha lista**: favoritos salvos no dispositivo, com filtros, ordenação e opção de desfazer. Para levar a outro aparelho: **link de compartilhamento** (`/favorites?lista=m550.t1396`) ou **backup em arquivo** (exportar/importar).
+- **Login com Google** (Firebase): a lista fica salva na conta e sincroniza em tempo real entre aparelhos. O que foi salvo antes de entrar é somado à conta. Sem login, tudo continua funcionando com a lista no aparelho.
+- **Minha lista**: favoritos salvos no dispositivo (ou na conta), com filtros, ordenação e opção de desfazer. Para levar a outro aparelho: **link de compartilhamento** (`/favorites?lista=m550.t1396`) ou **backup em arquivo** (exportar/importar).
 - **Mobile first**: navegação inferior no celular, áreas de toque generosas, skeletons de carregamento.
 - **Acessibilidade**: navegação por teclado, foco visível, `Esc` fecha o modal, suporte a `prefers-reduced-motion`.
 - **PWA**: instalável, com cache de imagens e respostas para uso offline.
@@ -52,6 +53,19 @@ e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
 - **[MyAnimeList](https://myanimelist.net/apiconfig/references/api/v2)** (API oficial v2) — animes. As chamadas passam pela rota `/api/anime/*`, então **o Client ID fica só no servidor**. A API oficial não filtra por gênero (o filtro é feito no servidor) e não tem personagens nem trailers.
 - **[Jikan](https://jikan.moe/)** — complemento opcional: personagens, dubladores, trailers e onde assistir. Se estiver fora do ar, essas seções só ficam vazias.
 
+- **[Firebase](https://firebase.google.com/)** — login com Google (Authentication) e lista de cada pessoa no Firestore, em `users/{uid}/favorites/{tipo-id}`. O SDK é carregado sob demanda. As regras em `firestore.rules` garantem que cada pessoa só lê e escreve a própria lista.
+
+---
+
+## 🔐 Configurando o login (Firebase)
+
+1. Em [console.firebase.google.com](https://console.firebase.google.com), crie um projeto e adicione um **App da Web**. Copie os valores do `firebaseConfig` para as variáveis `NEXT_PUBLIC_FIREBASE_*`.
+2. **Authentication → Método de login → Google**: ative.
+3. **Authentication → Configurações → Domínios autorizados**: adicione o domínio do site na Vercel (`localhost` já vem incluído).
+4. **Firestore Database**: crie o banco (modo produção) e publique as regras de `firestore.rules`, colando no console (aba *Regras*) ou com `npx firebase-tools deploy --only firestore:rules`.
+
+As chaves `NEXT_PUBLIC_FIREBASE_*` são públicas por natureza (identificam o projeto); quem protege os dados são as regras do Firestore.
+
 ---
 
 ## 🚀 Deploy na Vercel
@@ -64,6 +78,7 @@ Variáveis de ambiente (veja `.env.example`):
 | `NEXT_PUBLIC_TMDB_BASE_URL` | | `https://api.themoviedb.org/3` |
 | `NEXT_PUBLIC_TMDB_IMAGE_BASE` | | `https://image.tmdb.org/t/p` |
 | `MAL_CLIENT_ID` | ✅ | Client ID do app em [myanimelist.net/apiconfig](https://myanimelist.net/apiconfig) |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | | Config do app da Web no Firebase. Sem elas, o login fica desativado. |
 | `NEXT_PUBLIC_JIKAN_BASE_URL` | | `https://api.jikan.moe/v4` |
 | `NEXT_PUBLIC_SITE_URL` | | URL pública do site, para os links das prévias. Na Vercel é detectada automaticamente. |
 

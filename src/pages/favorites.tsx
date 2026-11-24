@@ -8,7 +8,9 @@ import type { MediaType } from '../types';
 import { GRID_CLASS } from '../components/media/MediaGrid';
 import MediaCard, { MediaCardSkeleton } from '../components/media/MediaCard';
 import { EmptyState } from '../components/ui/States';
-import { HeartIcon } from '../components/ui/Icons';
+import { CloudIcon, HeartIcon } from '../components/ui/Icons';
+import { SignInButton } from '../components/layout/AccountButton';
+import { useAuthStore } from '../store/authStore';
 import { useFavoritesStore, type FavoriteItem } from '../store/favoritesStore';
 
 type Filter = 'all' | MediaType;
@@ -26,6 +28,45 @@ const SORTERS: Record<Sort, (a: FavoriteItem, b: FavoriteItem) => number> = {
   rating: (a, b) => (b.rating ?? 0) - (a.rating ?? 0),
   title: (a, b) => a.title.localeCompare(b.title, 'pt-BR'),
 };
+
+/** Onde a lista está guardada, e o convite para entrar quando dá para salvar na conta. */
+function ListStorageNote() {
+  const status = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  const sync = useAuthStore((s) => s.sync);
+
+  if (status === 'signedIn' && user) {
+    return (
+      <p className="mt-2 flex items-center gap-2 text-zinc-400">
+        <CloudIcon size={16} className="shrink-0 text-brand-300" />
+        <span>
+          {sync === 'error'
+            ? 'Não foi possível sincronizar agora. As mudanças são enviadas quando a conexão voltar.'
+            : sync === 'syncing'
+              ? 'Sincronizando com a sua conta…'
+              : `Salva na sua conta${user.email ? ` (${user.email})` : ''} e sincronizada entre seus aparelhos.`}
+        </span>
+      </p>
+    );
+  }
+
+  if (status === 'signedOut') {
+    return (
+      <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-center">
+        <p className="flex-1 text-sm text-zinc-300">
+          Sua lista está salva só neste aparelho. Entre com o Google para guardá-la na sua conta e acessar de qualquer lugar.
+        </p>
+        <SignInButton className="shrink-0" />
+      </div>
+    );
+  }
+
+  return (
+    <p className="mt-2 text-zinc-400">
+      Fica salva neste aparelho. Use “Compartilhar lista” para abrir no celular ou em outro computador.
+    </p>
+  );
+}
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -56,9 +97,7 @@ export default function FavoritesPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="page-title">Minha lista</h1>
-            <p className="mt-2 text-zinc-400">
-              Fica salva neste aparelho. Use “Compartilhar lista” para abrir no celular ou em outro computador.
-            </p>
+            <ListStorageNote />
           </div>
           {hydrated && <ListToolbar items={Object.values(items).sort(SORTERS.recent)} />}
         </div>

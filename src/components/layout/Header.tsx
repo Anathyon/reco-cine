@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFavoritesStore } from '../../store/favoritesStore';
 import { LogoMark, SearchIcon } from '../ui/Icons';
 import { NAV_ITEMS } from './nav';
+import AccountButton from './AccountButton';
 
 export default function Header({ transparent }: { transparent?: boolean }) {
   const router = useRouter();
@@ -63,16 +64,19 @@ export default function Header({ transparent }: { transparent?: boolean }) {
           </ul>
         </nav>
 
-        <Link
-          href="/search"
-          aria-label="Buscar"
-          className={`ml-auto flex items-center gap-2 rounded-full px-3 py-2 text-sm text-zinc-300 transition hover:text-white md:ml-0 md:w-56 md:border md:border-white/10 md:bg-white/5 md:hover:bg-white/10 ${
-            router.pathname === '/search' ? 'text-white md:border-white/25' : ''
-          }`}
-        >
-          <SearchIcon size={20} />
-          <span className="hidden md:inline">Buscar títulos…</span>
-        </Link>
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <Link
+            href="/search"
+            aria-label="Buscar"
+            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm text-zinc-300 transition hover:text-white md:w-56 md:border md:border-white/10 md:bg-white/5 md:hover:bg-white/10 ${
+              router.pathname === '/search' ? 'text-white md:border-white/25' : ''
+            }`}
+          >
+            <SearchIcon size={20} />
+            <span className="hidden md:inline">Buscar títulos…</span>
+          </Link>
+          <AccountButton />
+        </div>
       </div>
     </header>
   );

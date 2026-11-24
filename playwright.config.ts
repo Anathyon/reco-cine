@@ -34,6 +34,6 @@ export default defineConfig({
     reuseExistingServer: !isCI,
     timeout: 180_000,
     // Sem chave: o servidor não busca dados reais e tudo passa pelos mocks no navegador.
-    env: { TMDB_API_KEY: '', NEXT_PUBLIC_TMDB_API_KEY: '', MAL_CLIENT_ID: '', NEXT_TELEMETRY_DISABLED: '1' },
+    env: { TMDB_API_KEY: '', NEXT_PUBLIC_TMDB_API_KEY: '', MAL_CLIENT_ID: '', NEXT_PUBLIC_FIREBASE_API_KEY: '', NEXT_TELEMETRY_DISABLED: '1' },
   },
 });

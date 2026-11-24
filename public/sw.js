@@ -1,5 +1,5 @@
 /* Service worker do Reco Cine: cache de imagens e de respostas de API para uso offline. */
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const API_CACHE = `reco-cine-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `reco-cine-images-${CACHE_VERSION}`;
 const MAX_IMAGES = 400;
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
 
-  if ((url.origin === self.location.origin && url.pathname.startsWith('/api/tmdb/')) || url.hostname === 'api.jikan.moe') {
+  if (url.origin === self.location.origin && (url.pathname.startsWith('/api/tmdb/') || url.pathname.startsWith('/api/anime/'))) {
     event.respondWith(networkFirst(request));
   } else if (url.hostname === 'image.tmdb.org' || url.hostname === 'cdn.myanimelist.net') {
     event.respondWith(cacheFirst(request));

@@ -11,6 +11,7 @@ import DetailsModal from '../components/media/DetailsModal';
 import InstallPrompt from '../components/InstallPrompt';
 import Toaster from '../components/ui/Toaster';
 import { useFavoritesStore } from '../store/favoritesStore';
+import { initAuth } from '../store/authStore';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -21,6 +22,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     useFavoritesStore.persist.rehydrate();
+    initAuth();
 
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       navigator.serviceWorker.register('/sw.js').catch(() => undefined);
