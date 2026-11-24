@@ -33,7 +33,11 @@ const DETAILS_FIELDS = [
   `recommendations{${LIST_FIELDS}}`,
 ].join(',');
 
-/** Conteúdo adulto nunca aparece (a API já filtra; isto é uma garantia extra). */
+/**
+ * Listas e catálogos não mostram conteúdo adulto (a API já filtra; isto é uma
+ * garantia extra). A busca, ao contrário, mostra tudo: quem procura um título
+ * específico deve encontrá-lo.
+ */
 const ADULT_GENRES = new Set([12, 49]);
 
 export class MalError extends Error {
@@ -92,7 +96,8 @@ export function toItem(a: any): MediaItem {
 
 const isSafe = (a: any) => !(a.genres || []).some((g: any) => ADULT_GENRES.has(g.id));
 const nodes = (data: any): any[] => (data?.data || []).map((d: any) => d.node).filter(Boolean);
-const toItems = (raw: any[]) => uniqueBy(raw.filter(isSafe).map(toItem), (i: MediaItem) => i.id);
+const toItems = (raw: any[], { includeAdult = false } = {}) =>
+  uniqueBy((includeAdult ? raw : raw.filter(isSafe)).map(toItem), (i: MediaItem) => i.id);
 
 /* ---------- listas ---------- */
 
@@ -132,8 +137,15 @@ export async function seasonNow(page = 1): Promise<Page<MediaItem>> {
 export async function searchAnime(q: string, page = 1): Promise<Page<MediaItem>> {
   // A API oficial recusa buscas com menos de 3 letras.
   if (q.trim().length < 3) return { items: [], page, hasMore: false };
-  const data = await mal('anime', { q: q.trim().slice(0, 64), offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE, fields: LIST_FIELDS });
-  return { items: toItems(nodes(data)), page, hasMore: Boolean(data?.paging?.next) };
+  const data = await mal('anime', {
+    q: q.trim().slice(0, 64),
+    offset: (page - 1) * PAGE_SIZE,
+    limit: PAGE_SIZE,
+    fields: LIST_FIELDS,
+    // Busca completa: inclui títulos +18, que a API esconde por padrão.
+    nsfw: 'true',
+  });
+  return { items: toItems(nodes(data), { includeAdult: true }), page, hasMore: Boolean(data?.paging?.next) };
 }
 
 const RANKING_FOR: Record<AnimeSort, RankingType> = { popular: 'bypopularity', top: 'all', recent: 'airing' };

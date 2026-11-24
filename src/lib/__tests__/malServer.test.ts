@@ -100,6 +100,17 @@ describe('listas', () => {
     expect(calledUrl(fetch).params).toMatchObject({ q: 'frieren', offset: '24' });
   });
 
+  it('busca é completa: inclui títulos +18 (as listas, não)', async () => {
+    const adult = { ...rawAnime, id: 9, title: 'Overflow', genres: [{ id: 12, name: 'Hentai' }] };
+    const fetch = mockFetch(list([rawAnime, adult]), list([rawAnime, adult]));
+    const search = await mal.searchAnime('overflow');
+    expect(calledUrl(fetch).params.nsfw).toBe('true');
+    expect(search.items.map((i) => i.id)).toEqual([52991, 9]);
+
+    const top = await mal.topAnime();
+    expect(top.items.map((i) => i.id)).toEqual([52991]);
+  });
+
   it('temporada atual mostra só as estreias quando há o bastante', async () => {
     const { year, season } = mal.currentSeason();
     const fresh = Array.from({ length: 30 }, (_, i) => ({ ...rawAnime, id: i + 1, start_season: { year, season } }));

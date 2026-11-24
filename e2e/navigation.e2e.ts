@@ -44,7 +44,7 @@ test('trailer abre dentro do modal', async ({ page }) => {
 test('link compartilhado com ?view abre o modal direto e fecha sem sair do site', async ({ page }) => {
   await page.goto('/movies?view=tv-201');
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByRole('heading', { name: 'Série Ômega' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { level: 2, name: 'Série Ômega' })).toBeVisible();
   await dialog.getByRole('button', { name: 'Fechar detalhes' }).click();
   await expect(dialog).toBeHidden();
   await expect(page).toHaveURL(/\/movies$/);

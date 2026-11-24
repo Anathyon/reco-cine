@@ -62,6 +62,12 @@ describe('listas', () => {
     expect(page.hasMore).toBe(true);
   });
 
+  it('a busca é completa: inclui títulos adultos', async () => {
+    const fetch = mockFetch(jsonResponse({ page: 1, total_pages: 1, results: [] }));
+    await searchTmdb('movie', 'qualquer');
+    expect(calledUrl(fetch).params.include_adult).toBe('true');
+  });
+
   it('não exibe nota quando o título não tem votos', async () => {
     mockFetch(jsonResponse({ page: 1, total_pages: 1, results: [{ ...rawMovie, vote_count: 0, vote_average: 0 }] }));
     const page = await getTrending('movie');

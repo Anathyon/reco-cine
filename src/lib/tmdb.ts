@@ -117,7 +117,8 @@ export async function discover(type: TmdbType, opts: DiscoverOptions) {
 }
 
 export async function searchTmdb(type: TmdbType | 'multi', query: string, page = 1, signal?: AbortSignal) {
-  const data = await request(`search/${type}`, { query, page, include_adult: 'false' }, signal);
+  // Busca completa: inclui títulos adultos, para que qualquer título pesquisado seja encontrado.
+  const data = await request(`search/${type}`, { query, page, include_adult: 'true' }, signal);
   return normalizePage(data, type === 'multi' ? undefined : type);
 }
 
