@@ -22,7 +22,7 @@ export default function Footer() {
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {[...NAV_ITEMS, { href: '/search', label: 'Buscar' }].map((item) => (
               <li key={item.href}>
-                <Link href={item.href} className="text-zinc-400 transition hover:text-white">
+                <Link href={item.href} className="inline-block py-1.5 text-zinc-400 transition hover:text-white">
                   {item.label}
                 </Link>
               </li>

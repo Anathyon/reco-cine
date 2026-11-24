@@ -173,7 +173,7 @@ describe('detalhes', () => {
     mockFetch(jsonResponse(full), jsonResponse({}, 503));
     const d = await mal.animeDetails(52991);
     expect(d.originalTitle).toBe('Sousou no Frieren');
-    expect(d.genres).toEqual(['Adventure', 'Fantasy']);
+    expect(d.genres).toEqual(['Aventura', 'Fantasia']);
     expect(d.facts).toEqual(
       expect.arrayContaining([
         { label: 'Temporada', value: 'Outono 2023' },

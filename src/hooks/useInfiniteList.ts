@@ -14,7 +14,9 @@ const listCache = new Map<string, ListState>();
 
 export function useInfiniteList(key: string | null, fetchPage: (page: number) => Promise<Page<MediaItem>>) {
   const [list, setList] = useState<ListState>(() => (key && listCache.get(key)) || { items: [], page: 0, hasMore: true });
-  const [loading, setLoading] = useState(false);
+  // Começa "carregando" quando ainda não há dados: assim o primeiro desenho no
+  // navegador é igual ao HTML do servidor (esqueletos), sem erro de hidratação.
+  const [loading, setLoading] = useState(() => Boolean(key) && !listCache.get(key!));
   const [error, setError] = useState<string | null>(null);
 
   const fetchRef = useRef(fetchPage);

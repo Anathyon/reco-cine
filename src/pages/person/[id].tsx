@@ -141,7 +141,7 @@ export default function PersonPage({ id, person: initial, siteUrl }: Props) {
                 <TranslatedText type="person" id={id} text="" emptyText="Biografia ainda não disponível." className="line-clamp-[14]" />
               )}
             </section>
-            <a href={p.externalUrl} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white">
+            <a href={p.externalUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-8 items-center gap-1.5 text-sm text-zinc-400 hover:text-white">
               Ver no TMDB <ExternalIcon size={14} />
             </a>
           </div>

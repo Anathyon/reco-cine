@@ -322,6 +322,10 @@ function AllResults({ term, onSeeAll, onEmpty, fallback }: ResultsForProps) {
     { tab: 'tv' as const, title: 'Séries', q: tmdb, items: tmdb.data?.items.filter((i) => i.type === 'tv') },
     { tab: 'anime' as const, title: 'Animes', q: anime, items: anime.data?.items },
   ];
+  // O TMDB ordena por relevância: a seção do resultado mais relevante vem primeiro
+  // ("the walking dead" mostra Séries antes de Filmes).
+  const topType = tmdb.data?.items[0]?.type;
+  if (topType === 'tv') titleSections.unshift(...titleSections.splice(1, 1));
 
   const loading = tmdb.loading || anime.loading || people.loading;
   const isEmpty =
@@ -389,7 +393,7 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll: () => voi
   return (
     <div className="mb-4 flex items-end justify-between">
       <h2 className="font-display text-lg font-semibold text-white">{title}</h2>
-      <button onClick={onSeeAll} className="inline-flex items-center gap-0.5 text-sm font-medium text-zinc-400 hover:text-white">
+      <button onClick={onSeeAll} className="-my-2 inline-flex items-center gap-0.5 py-2 text-sm font-medium text-zinc-400 hover:text-white">
         Ver todos <ChevronRightIcon size={16} />
       </button>
     </div>

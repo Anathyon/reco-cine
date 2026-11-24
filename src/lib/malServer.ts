@@ -199,6 +199,28 @@ const STATUS: Record<string, string> = {
   not_yet_aired: 'Ainda não lançado',
 };
 
+/** Gêneros, temas e demografias do MyAnimeList em português. */
+const GENRES_PT: Record<string, string> = {
+  Action: 'Ação', Adventure: 'Aventura', 'Avant Garde': 'Vanguarda', 'Award Winning': 'Premiado', Comedy: 'Comédia',
+  Drama: 'Drama', Fantasy: 'Fantasia', Gourmet: 'Gastronomia', Horror: 'Terror', Mystery: 'Mistério', Romance: 'Romance',
+  'Sci-Fi': 'Ficção científica', 'Slice of Life': 'Slice of life', Sports: 'Esportes', Supernatural: 'Sobrenatural',
+  Suspense: 'Suspense', Erotica: 'Erótico', 'Adult Cast': 'Elenco adulto', Anthropomorphic: 'Antropomórfico',
+  Childcare: 'Cuidado infantil', 'Combat Sports': 'Esportes de combate', Delinquents: 'Delinquentes', Detective: 'Detetive',
+  Educational: 'Educativo', 'Gag Humor': 'Humor pastelão', Harem: 'Harém', 'High Stakes Game': 'Jogo de alto risco',
+  Historical: 'Histórico', 'Idols (Female)': 'Idols (feminino)', 'Idols (Male)': 'Idols (masculino)',
+  'Love Polygon': 'Triângulo amoroso', 'Magical Sex Shift': 'Troca de gênero mágica', 'Mahou Shoujo': 'Garota mágica',
+  'Martial Arts': 'Artes marciais', Medical: 'Medicina', Military: 'Militar', Music: 'Música', Mythology: 'Mitologia',
+  'Organized Crime': 'Crime organizado', 'Otaku Culture': 'Cultura otaku', Parody: 'Paródia', 'Performing Arts': 'Artes cênicas',
+  Pets: 'Animais de estimação', Psychological: 'Psicológico', Racing: 'Corrida', Reincarnation: 'Reencarnação',
+  'Reverse Harem': 'Harém reverso', 'Romantic Subtext': 'Subtexto romântico', School: 'Escolar', Showbiz: 'Mundo artístico',
+  Space: 'Espaço', 'Strategy Game': 'Jogo de estratégia', 'Super Power': 'Superpoderes', Survival: 'Sobrevivência',
+  'Team Sports': 'Esportes coletivos', 'Time Travel': 'Viagem no tempo', 'Urban Fantasy': 'Fantasia urbana',
+  Vampire: 'Vampiros', 'Video Game': 'Videogame', Villainess: 'Vilã', 'Visual Arts': 'Artes visuais',
+  Workplace: 'Ambiente de trabalho', Kids: 'Infantil',
+};
+
+export const genreName = (name: string) => GENRES_PT[name] ?? name;
+
 const SEASON_LABEL: Record<string, string> = { winter: 'Inverno', spring: 'Primavera', summer: 'Verão', fall: 'Outono' };
 
 function duration(seconds?: number): string | null {
@@ -225,7 +247,7 @@ export function normalizeMalDetails(id: number, a: any, extras: JikanExtras = {}
     backdrop: extras.backdrop ?? null,
     originalTitle: base.title !== a.title ? a.title : a.alternative_titles?.ja || null,
     tagline: null,
-    genres: (a.genres || []).map((g: any) => g.name),
+    genres: (a.genres || []).map((g: any) => genreName(g.name)),
     facts,
     cast: [],
     trailerKey: extras.trailerKey ?? null,

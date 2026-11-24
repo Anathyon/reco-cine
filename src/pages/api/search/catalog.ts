@@ -21,3 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(502).json({ error: 'Não foi possível montar o índice de busca' });
   }
 }
+
+/** Montar o índice na primeira vez leva alguns segundos. */
+export const config = { maxDuration: 30 };

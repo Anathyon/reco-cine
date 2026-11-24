@@ -47,7 +47,7 @@ export default function TranslatedText({ type, id, text, textLanguage, emptyText
         ) : translatedText ? (
           <>
             {showOriginal ? `Texto original${fromLabel ? ` (em ${fromLabel})` : ''}.` : `Traduzido automaticamente${fromLabel ? ` do ${fromLabel}` : ''}.`}{' '}
-            <button type="button" onClick={() => setShowOriginal((v) => !v)} className="font-medium text-zinc-300 underline-offset-2 hover:text-white hover:underline">
+            <button type="button" onClick={() => setShowOriginal((v) => !v)} className="-my-1.5 inline-block py-1.5 font-medium text-zinc-300 underline-offset-2 hover:text-white hover:underline">
               {showOriginal ? 'Ver tradução' : 'Ver original'}
             </button>
           </>

@@ -91,3 +91,19 @@ it('mostra o erro e tenta a mesma página de novo', async () => {
   expect(fetchPage).toHaveBeenNthCalledWith(2, 1);
   expect(result.current.error).toBeNull();
 });
+
+it('o primeiro desenho já é "carregando" (igual ao HTML do servidor, sem erro de hidratação)', () => {
+  const fetchPage = jest.fn(() => new Promise<Page<MediaItem>>(() => undefined));
+  const states: boolean[] = [];
+  renderHook(() => {
+    const list = useInfiniteList(key(), fetchPage);
+    states.push(list.loading);
+    return list;
+  });
+  expect(states[0]).toBe(true);
+});
+
+it('sem chave, não fica "carregando"', () => {
+  const { result } = renderHook(() => useInfiniteList(null, jest.fn()));
+  expect(result.current.loading).toBe(false);
+});

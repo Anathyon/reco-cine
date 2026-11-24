@@ -117,7 +117,7 @@ export default function HeroBanner({ items = [], loading, error, onRetry }: Prop
                 aria-selected={i === index}
                 aria-label={`Destaque ${i + 1}: ${s.title}`}
                 onClick={() => setIndex(i)}
-                className="group/dot py-2"
+                className="group/dot flex h-6 min-w-6 items-center justify-center px-1"
               >
                 <span
                   className={`block h-1 rounded-full transition-all duration-500 ${

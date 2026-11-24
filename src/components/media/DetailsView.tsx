@@ -216,11 +216,11 @@ export default function DetailsView({ type, id, initialDetails, variant = 'modal
 
             <div className="flex flex-col items-start gap-2">
               {variant === 'modal' && (
-                <Link href={titleHref(d)} className="text-sm font-medium text-brand-300 hover:text-brand-400">
+                <Link href={titleHref(d)} className="inline-flex min-h-8 items-center text-sm font-medium text-brand-300 hover:text-brand-400">
                   Abrir página do título
                 </Link>
               )}
-              <a href={d.externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white">
+              <a href={d.externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-8 items-center gap-1.5 text-sm text-zinc-400 hover:text-white">
                 {d.externalLabel} <ExternalIcon size={14} />
               </a>
             </div>

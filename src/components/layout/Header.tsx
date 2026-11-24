@@ -29,7 +29,7 @@ export default function Header({ transparent }: { transparent?: boolean }) {
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 btn-primary">
         Pular para o conteúdo
       </a>
-      <div className="container-page flex h-16 items-center gap-8">
+      <div className="container-page flex h-16 items-center gap-4 lg:gap-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label="Reco Cine — página inicial">
           <LogoMark size={32} />
           <span className="font-display text-lg font-bold tracking-tight text-white">
@@ -68,12 +68,12 @@ export default function Header({ transparent }: { transparent?: boolean }) {
           <Link
             href="/search"
             aria-label="Buscar"
-            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm text-zinc-300 transition hover:text-white md:w-56 md:border md:border-white/10 md:bg-white/5 md:hover:bg-white/10 ${
-              router.pathname === '/search' ? 'text-white md:border-white/25' : ''
+            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm text-zinc-300 transition hover:text-white lg:w-56 lg:border lg:border-white/10 lg:bg-white/5 lg:hover:bg-white/10 ${
+              router.pathname === '/search' ? 'text-white lg:border-white/25' : ''
             }`}
           >
             <SearchIcon size={20} />
-            <span className="hidden md:inline">Buscar títulos…</span>
+            <span className="hidden lg:inline">Buscar títulos…</span>
           </Link>
           <AccountButton />
         </div>
