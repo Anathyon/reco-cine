@@ -12,7 +12,12 @@ Descubra filmes, séries e animes, assista aos trailers, veja **onde assistir no
 - **Página própria para cada título** (`/title/movie/550`), gerada no servidor, com prévia (Open Graph) ao compartilhar no WhatsApp, Telegram e redes sociais.
 - **Modal na URL** (`?view=movie-550`): o botão “voltar” do celular fecha o modal. Ctrl/Cmd+clique num card abre a página do título em outra aba.
 - **Animes com personagens e dubladores** (MyAnimeList).
-- **Busca ao vivo** em filmes, séries e animes ao mesmo tempo, com sugestões quando o campo está vazio.
+- **Busca ao vivo e tolerante a erros** em filmes, séries, animes e pessoas ao mesmo tempo:
+  - **“Você quis dizer…”**: erros de digitação são corrigidos (“the wolking ded” → *The Walking Dead*, “leonardo dicapro” → *Leonardo DiCaprio*). Se a busca não acha nada, os resultados da grafia corrigida aparecem sozinhos, como no Google.
+  - **Busca por atores e diretores**, com página própria (`/person/6193`) mostrando a filmografia. O elenco de cada título também leva a essa página.
+  - Quando nada é encontrado, mostra **títulos parecidos** com o que foi digitado.
+  - A busca é completa: inclui títulos +18 (as listas e catálogos, não).
+- **Sinopses traduzidas automaticamente** para o idioma do navegador (ex.: as de anime, que vêm em inglês), com a opção “Ver original”. Vale também para filmes/séries sem sinopse em português e biografias.
 - **Login com Google** (Firebase): a lista fica salva na conta e sincroniza em tempo real entre aparelhos. O que foi salvo antes de entrar é somado à conta. Sem login, tudo continua funcionando com a lista no aparelho.
 - **Minha lista**: favoritos salvos no dispositivo (ou na conta), com filtros, ordenação e opção de desfazer. Para levar a outro aparelho: **link de compartilhamento** (`/favorites?lista=m550.t1396`) ou **backup em arquivo** (exportar/importar).
 - **Mobile first**: navegação inferior no celular, áreas de toque generosas, skeletons de carregamento.
@@ -53,6 +58,8 @@ e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
 - **[MyAnimeList](https://myanimelist.net/apiconfig/references/api/v2)** (API oficial v2) — animes. As chamadas passam pela rota `/api/anime/*`, então **o Client ID fica só no servidor**. A API oficial não filtra por gênero (o filtro é feito no servidor) e não tem personagens nem trailers.
 - **[Jikan](https://jikan.moe/)** — complemento opcional: personagens, dubladores, trailers e onde assistir. Se estiver fora do ar, essas seções só ficam vazias.
 
+- **Busca tolerante a erros**: a rota `/api/search/catalog` monta (uma vez por dia, em cache na CDN) um índice com ~4 mil títulos e pessoas populares do TMDB e do MyAnimeList. O navegador baixa esse índice e compara o que foi digitado palavra por palavra (distância de Damerau-Levenshtein, sem acentos), em ~10 ms. Para o que não está no índice, `/api/search/spell` usa as sugestões de busca do Google.
+- **Tradução**: `/api/translate/{tipo}/{id}` busca o texto original no servidor e traduz com o endpoint público do Google Tradutor (gratuito, sem chave e **não oficial**: pode ficar indisponível; nesse caso o original é mostrado). As traduções ficam 30 dias em cache.
 - **[Firebase](https://firebase.google.com/)** — login com Google (Authentication) e lista de cada pessoa no Firestore, em `users/{uid}/favorites/{tipo-id}`. O SDK é carregado sob demanda. As regras em `firestore.rules` garantem que cada pessoa só lê e escreve a própria lista.
 
 ---

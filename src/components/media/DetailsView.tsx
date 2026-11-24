@@ -9,6 +9,8 @@ import { toast } from '../../store/toastStore';
 import FavoriteButton from './FavoriteButton';
 import { MediaRow } from './MediaRow';
 import Poster from './Poster';
+import TranslatedText from './TranslatedText';
+import { personHref } from '../../lib/people';
 import { ErrorState } from '../ui/States';
 import { ExternalIcon, PlayIcon, ShareIcon, StarIcon, XIcon } from '../ui/Icons';
 
@@ -107,23 +109,50 @@ export default function DetailsView({ type, id, initialDetails, variant = 'modal
             <section>
               <h3 className="section-title">Sinopse</h3>
               {d.tagline && <p className="mb-2 italic text-zinc-400">“{d.tagline}”</p>}
-              <p className="leading-relaxed text-zinc-300">{d.overview || 'Sinopse ainda não disponível em português.'}</p>
-              {d.type === 'anime' && d.overview && <p className="mt-2 text-xs text-zinc-500">Sinopse original do MyAnimeList (em inglês).</p>}
+              {d.type !== 'anime' && d.overview ? (
+                <p className="leading-relaxed text-zinc-300">{d.overview}</p>
+              ) : (
+                // Animes vêm em inglês do MyAnimeList; filmes/séries sem sinopse em português usam outro idioma.
+                <TranslatedText
+                  type={d.type}
+                  id={d.id}
+                  text={d.type === 'anime' ? d.overview : ''}
+                  textLanguage={d.type === 'anime' ? 'en' : undefined}
+                  emptyText="Sinopse ainda não disponível."
+                />
+              )}
             </section>
 
             {cast.length > 0 && (
               <section>
                 <h3 className="section-title">{d.type === 'anime' ? 'Personagens' : 'Elenco principal'}</h3>
                 <div className="no-scrollbar -mx-5 flex gap-4 overflow-x-auto px-5 sm:-mx-10 sm:px-10">
-                  {cast.map((c) => (
-                    <div key={`${c.id}-${c.role}`} className="w-20 shrink-0 text-center sm:w-24">
-                      <div className="mx-auto aspect-square w-full overflow-hidden rounded-full bg-ink-800 ring-1 ring-white/10">
-                        <Poster src={c.photo} alt={c.name} className="h-full w-full" />
+                  {cast.map((c) => {
+                    const content = (
+                      <>
+                        <div className="mx-auto aspect-square w-full overflow-hidden rounded-full bg-ink-800 ring-1 ring-white/10 transition group-hover:ring-brand-400/60">
+                          <Poster src={c.photo} alt={c.name} className="h-full w-full" />
+                        </div>
+                        <p className="mt-2 line-clamp-2 text-xs font-medium text-zinc-200 group-hover:text-white">{c.name}</p>
+                        {c.role && <p className="line-clamp-1 text-[11px] text-zinc-500">{c.role}</p>}
+                      </>
+                    );
+                    // Elenco de filmes/séries leva à filmografia; personagens de anime não são pessoas do TMDB.
+                    return d.type === 'anime' ? (
+                      <div key={`${c.id}-${c.role}`} className="w-20 shrink-0 text-center sm:w-24">
+                        {content}
                       </div>
-                      <p className="mt-2 line-clamp-2 text-xs font-medium text-zinc-200">{c.name}</p>
-                      {c.role && <p className="line-clamp-1 text-[11px] text-zinc-500">{c.role}</p>}
-                    </div>
-                  ))}
+                    ) : (
+                      <Link
+                        key={`${c.id}-${c.role}`}
+                        href={personHref(c.id)}
+                        className="group w-20 shrink-0 text-center sm:w-24"
+                        aria-label={`${c.name}${c.role ? ` (${c.role})` : ''} — ver filmografia`}
+                      >
+                        {content}
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -14,7 +14,7 @@ import {
 } from './tmdb';
 
 /** Rotas do TMDB que o proxy aceita repassar. */
-export const ALLOWED_PATH = /^(movie|tv|trending|search|discover|genre|watch)(\/[\w-]+)*$/;
+export const ALLOWED_PATH = /^(movie|tv|person|trending|search|discover|genre|watch)(\/[\w-]+)*$/;
 
 export const tmdbApiKey = () => process.env.TMDB_API_KEY || process.env.NEXT_PUBLIC_TMDB_API_KEY || '';
 

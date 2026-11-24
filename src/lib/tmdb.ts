@@ -27,7 +27,7 @@ export function toSearchParams(params: Params): URLSearchParams {
   return search;
 }
 
-async function request<T = any>(path: string, params: Params = {}, signal?: AbortSignal): Promise<T> {
+export async function request<T = any>(path: string, params: Params = {}, signal?: AbortSignal): Promise<T> {
   const qs = toSearchParams(params).toString();
   const res = await fetch(`/api/tmdb/${path}${qs ? `?${qs}` : ''}`, { signal });
   if (!res.ok) {
@@ -39,7 +39,7 @@ async function request<T = any>(path: string, params: Params = {}, signal?: Abor
 
 /* ---------- normalização ---------- */
 
-function toItem(raw: any, fallbackType?: TmdbType): MediaItem | null {
+export function toItem(raw: any, fallbackType?: TmdbType): MediaItem | null {
   const type: TmdbType | undefined = raw.media_type === 'movie' || raw.media_type === 'tv' ? raw.media_type : fallbackType;
   if (!type) return null; // ignora "person" na busca multi
   return {

@@ -31,3 +31,18 @@ test('sem termo, sugere buscas populares', async ({ page }) => {
   await expect(page.getByRole('searchbox', { name: 'Buscar títulos' })).toHaveValue('Série Sigma');
   await expect(page).toHaveURL(/q=S%C3%A9rie(\+|%20)Sigma/);
 });
+
+test('erro de digitação: corrige sozinho quando não acha nada', async ({ page }) => {
+  await page.goto('/search?q=flime%20alfa');
+  await expect(page.getByText(/Nenhum resultado para “flime alfa”. Mostrando resultados para/)).toBeVisible();
+  await expect(page.getByRole('article').filter({ hasText: 'Filme Alfa' })).toBeVisible();
+});
+
+test('busca por ator leva à filmografia', async ({ page }) => {
+  await page.goto('/search?q=atriz%20exemplo');
+  await page.getByRole('link', { name: 'Atriz Exemplo — ver filmografia' }).click();
+  await expect(page).toHaveURL(/\/person\/1$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Atriz Exemplo' })).toBeVisible();
+  await expect(page.getByText('Texto traduzido person 1.')).toBeVisible();
+  await expect(page.getByRole('article').filter({ hasText: 'Filme Alfa' })).toBeVisible();
+});

@@ -49,6 +49,24 @@ export const ANIMES: Raw[] = [
   backdrop: null,
 }));
 
+export const PEOPLE: Raw[] = [
+  {
+    id: 1,
+    name: 'Atriz Exemplo',
+    known_for_department: 'Acting',
+    profile_path: '/actor.jpg',
+    known_for: [{ title: 'Filme Alfa' }],
+  },
+];
+
+/** Índice da busca tolerante a erros (/api/search/catalog). */
+const SEARCH_INDEX = [
+  ...MOVIES.map((m) => ({ k: 'movie', id: m.id, t: m.title, y: m.release_date.slice(0, 4), p: m.poster_path })),
+  ...SERIES.map((s) => ({ k: 'tv', id: s.id, t: s.name, y: s.first_air_date.slice(0, 4), p: s.poster_path })),
+  ...ANIMES.map((a) => ({ k: 'anime', id: a.id, t: a.title, o: a.originalTitle ?? undefined, y: a.year, p: a.poster })),
+  ...PEOPLE.map((p) => ({ k: 'person', id: p.id, t: p.name })),
+];
+
 const list = (results: Raw[]) => ({ page: 1, total_pages: 1, total_results: results.length, results });
 const animePage = (items: Raw[]) => ({ items: items.map(({ originalTitle: _o, ...item }) => item), page: 1, hasMore: false });
 
@@ -96,6 +114,21 @@ function handleTmdb(route: Route, options: MockOptions) {
     const pool = path.endsWith('tv') ? SERIES : MOVIES;
     const genre = Number(url.searchParams.get('with_genres'));
     return json(list(genre ? pool.filter((m) => m.genre_ids?.includes(genre)) : pool));
+  }
+  if (path === 'search/person') {
+    const q = (url.searchParams.get('query') || '').toLowerCase();
+    return json(list(PEOPLE.filter((p) => p.name.toLowerCase().includes(q))));
+  }
+  const person = path.match(/^person\/(\d+)$/);
+  if (person) {
+    const raw = PEOPLE.find((p) => p.id === Number(person[1]));
+    if (!raw) return json({ status_message: 'not found' }, 404);
+    return json({
+      ...raw,
+      biography: '',
+      birthday: '1970-01-01',
+      combined_credits: { cast: [{ ...MOVIES[0], character: 'Protagonista' }, { ...SERIES[0], character: 'Detetive' }], crew: [] },
+    });
   }
   if (/^search\/(multi|movie|tv)$/.test(path)) {
     const q = (url.searchParams.get('query') || '').toLowerCase();
@@ -164,4 +197,13 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
   await page.route('https://www.youtube-nocookie.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>trailer</p>' }));
   await page.route('**/api/tmdb/**', (route) => handleTmdb(route, options));
   await page.route('**/api/anime/**', handleAnime);
+  await page.route('**/api/search/catalog', (route) => route.fulfill({ json: SEARCH_INDEX }));
+  await page.route('**/api/search/spell**', (route) => route.fulfill({ json: { suggestion: null } }));
+  await page.route('**/api/translate/**', (route) => {
+    const [, type, id] = new URL(route.request().url()).pathname.match(/\/api\/translate\/(\w+)\/(\d+)/) ?? [];
+    const original = type === 'person' ? 'Born in Exampleville.' : `Original synopsis ${id}.`;
+    return route.fulfill({
+      json: { text: `Texto traduzido ${type} ${id}.`, original, from: 'en', to: 'pt', translated: true },
+    });
+  });
 }

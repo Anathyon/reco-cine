@@ -73,7 +73,7 @@ export async function mal<T = any>(path: string, params: Params = {}, timeoutMs 
 
 /* ---------- normalização ---------- */
 
-function cleanSynopsis(text?: string | null): string {
+export function cleanSynopsis(text?: string | null): string {
   if (!text) return '';
   return text.replace(/\s*\[Written by MAL Rewrite\]\s*$/i, '').replace(/\s*\(Source:[^)]*\)\s*$/i, '').trim();
 }

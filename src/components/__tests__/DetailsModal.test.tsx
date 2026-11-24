@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useRouter } from 'next/router';
 import DetailsModal from '../media/DetailsModal';
 import { getAnimeCharacters, getDetails, getSimilar } from '../../lib/media';
+import { getTranslation } from '../../lib/translate';
 import { useFavoritesStore } from '../../store/favoritesStore';
 import { makeItem, makeRouter } from '../../test/utils';
 import type { MediaDetails } from '../../types';
@@ -12,6 +13,11 @@ jest.mock('../../lib/media', () => ({
   getDetails: jest.fn(),
   getSimilar: jest.fn(),
   getAnimeCharacters: jest.fn(),
+}));
+jest.mock('../../lib/translate', () => ({
+  ...jest.requireActual('../../lib/translate'),
+  userLanguage: () => 'pt',
+  getTranslation: jest.fn(),
 }));
 
 const details: MediaDetails = {
@@ -114,10 +120,34 @@ it('mostra o erro e permite tentar de novo', async () => {
   expect(await screen.findByRole('heading', { name: 'Clube da Luta' })).toBeInTheDocument();
 });
 
-it('avisa que a sinopse de anime está em inglês', async () => {
+it('traduz a sinopse de anime e permite ver o original', async () => {
   (getAnimeCharacters as jest.Mock).mockResolvedValue([]);
-  renderModal({ type: 'anime', providersLink: null, cast: [] });
-  expect(await screen.findByText(/Sinopse original do MyAnimeList/)).toBeInTheDocument();
+  (getTranslation as jest.Mock).mockResolvedValue({
+    text: 'Uma elfa maga sobrevive ao grupo.',
+    original: 'An elf mage outlives her party.',
+    from: 'en',
+    to: 'pt',
+    translated: true,
+  });
+  renderModal({ type: 'anime', overview: 'An elf mage outlives her party.', providersLink: null, cast: [] });
+
+  expect(await screen.findByText('Uma elfa maga sobrevive ao grupo.')).toBeInTheDocument();
+  expect(screen.getByText(/Traduzido automaticamente do inglês/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Ver original' }));
+  expect(screen.getByText('An elf mage outlives her party.')).toBeInTheDocument();
+});
+
+it('se o tradutor falhar, mostra a sinopse original', async () => {
+  (getAnimeCharacters as jest.Mock).mockResolvedValue([]);
+  (getTranslation as jest.Mock).mockRejectedValue(new Error('fora do ar'));
+  renderModal({ type: 'anime', overview: 'An elf mage outlives her party.', providersLink: null, cast: [] });
+  expect(await screen.findByText('Texto original em inglês.')).toBeInTheDocument();
+  expect(screen.getByText('An elf mage outlives her party.')).toBeInTheDocument();
+});
+
+it('o elenco leva à filmografia de cada pessoa', async () => {
+  renderModal();
+  expect(await screen.findByRole('link', { name: 'Edward Norton (Narrador) — ver filmografia' })).toHaveAttribute('href', '/person/1');
 });
 
 it('em animes, carrega os personagens à parte', async () => {

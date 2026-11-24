@@ -1,22 +1,28 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import MediaGrid, { GRID_CLASS } from '../components/media/MediaGrid';
 import MediaCard, { MediaCardSkeleton } from '../components/media/MediaCard';
+import PersonCard, { PEOPLE_GRID, PersonCardSkeleton } from '../components/media/PersonCard';
 import { EmptyState, ErrorState } from '../components/ui/States';
-import { ChevronRightIcon, SearchIcon, XIcon } from '../components/ui/Icons';
+import { ChevronRightIcon, SearchIcon, SparklesIcon, XIcon } from '../components/ui/Icons';
 import { useDebounce } from '../hooks/useDebounce';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { useQuery } from '../hooks/useQuery';
 import { getTrending, searchTmdb } from '../lib/tmdb';
 import { searchAnime } from '../lib/anime';
+import { searchPeople, type PersonSummary } from '../lib/people';
+import { didYouMean, normalize, type FuzzyIndex, type FuzzyMatch } from '../lib/fuzzy';
+import { entryToItem, fetchSpellSuggestion, loadSearchIndex } from '../lib/searchIndex';
+import type { MediaItem } from '../types';
 
-type Tab = 'all' | 'movie' | 'tv' | 'anime';
+type Tab = 'all' | 'movie' | 'tv' | 'anime' | 'person';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'all', label: 'Tudo' },
   { key: 'movie', label: 'Filmes' },
   { key: 'tv', label: 'Séries' },
   { key: 'anime', label: 'Animes' },
+  { key: 'person', label: 'Pessoas' },
 ];
 
 export default function SearchPage() {
@@ -34,6 +40,9 @@ export default function SearchPage() {
   };
   const debounced = useDebounce(input.trim(), 350);
   const term = urlQuery.trim();
+
+  // Índice para a busca tolerante a erros (baixado uma vez, em segundo plano).
+  const index = useQuery('search-index', loadSearchIndex);
 
   // Sincroniza o campo com a URL (ex.: carregamento inicial ou "voltar" no histórico).
   useEffect(() => {
@@ -56,6 +65,18 @@ export default function SearchPage() {
     if (next !== 'all') query.type = next;
     router.replace({ pathname: '/search', query }, undefined, { shallow: true, scroll: false });
   };
+
+  /** Troca a busca na hora (sugestões "Você quis dizer"). */
+  const searchFor = (q: string) => {
+    edited.current = false;
+    setInput(q);
+    const query: Record<string, string> = { q };
+    if (tab !== 'all') query.type = tab;
+    router.replace({ pathname: '/search', query }, undefined, { shallow: true, scroll: false });
+    window.scrollTo?.({ top: 0 });
+  };
+
+  const correction = useMemo(() => (index.data && term ? didYouMean(index.data, term) : null), [index.data, term]);
 
   return (
     <>
@@ -80,7 +101,7 @@ export default function SearchPage() {
             type="search"
             value={input}
             onChange={(e) => updateInput(e.target.value)}
-            placeholder="Filmes, séries ou animes…"
+            placeholder="Filmes, séries, animes ou atores…"
             aria-label="Buscar títulos"
             autoFocus
             autoComplete="off"
@@ -119,10 +140,16 @@ export default function SearchPage() {
         <div className="mt-8">
           {!term ? (
             <Suggestions onPick={updateInput} />
-          ) : tab === 'all' ? (
-            <AllResults term={term} onSeeAll={setTab} />
           ) : (
-            <TabResults term={term} tab={tab} />
+            <Results
+              key={`${tab}:${term.toLowerCase()}`}
+              term={term}
+              tab={tab}
+              index={index.data ?? null}
+              correction={correction}
+              onSearch={searchFor}
+              onSeeAll={setTab}
+            />
           )}
         </div>
       </div>
@@ -130,14 +157,106 @@ export default function SearchPage() {
   );
 }
 
-function fetchTab(tab: Exclude<Tab, 'all'>, term: string, page: number) {
+/* ---------- resultados (com correção automática) ---------- */
+
+interface ResultsProps {
+  term: string;
+  tab: Tab;
+  index: FuzzyIndex | null;
+  correction: FuzzyMatch | null;
+  onSearch: (q: string) => void;
+  onSeeAll: (tab: Tab) => void;
+}
+
+/**
+ * Busca o termo; se nada for encontrado, tenta a grafia corrigida (do índice
+ * ou, em último caso, do Google) e mostra esses resultados, como o Google faz.
+ */
+function Results({ term, tab, index, correction, onSearch, onSeeAll }: ResultsProps) {
+  const [empty, setEmpty] = useState(false);
+  const spell = useQuery(empty && !correction ? `spell:${term.toLowerCase()}` : null, () => fetchSpellSuggestion(term));
+  const fixed = empty ? correction?.name ?? (spell.data && normalize(spell.data) !== normalize(term) ? spell.data : null) : null;
+
+  if (empty && fixed) {
+    return (
+      <>
+        <Notice>
+          Nenhum resultado para “{term}”. Mostrando resultados para{' '}
+          <button type="button" onClick={() => onSearch(fixed)} className="font-semibold text-white underline-offset-2 hover:underline">
+            {fixed}
+          </button>
+          .
+        </Notice>
+        <ResultsFor term={fixed} tab={tab} onSeeAll={onSeeAll} onEmpty={() => undefined} fallback={<NoResults term={term} index={index} />} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {correction && !empty && (
+        <Notice>
+          Você quis dizer{' '}
+          <button type="button" onClick={() => onSearch(correction.name)} className="font-semibold text-white underline-offset-2 hover:underline">
+            {correction.name}
+          </button>
+          ?
+        </Notice>
+      )}
+      <ResultsFor
+        term={term}
+        tab={tab}
+        onSeeAll={onSeeAll}
+        onEmpty={() => setEmpty(true)}
+        // Enquanto a correção não chega, mostra carregando (sem piscar "nada encontrado").
+        fallback={empty && (spell.data !== undefined || spell.error) ? <NoResults term={term} index={index} /> : <ResultsSkeleton />}
+      />
+    </>
+  );
+}
+
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <p className="mb-6 flex items-start gap-2 rounded-2xl border border-brand-400/20 bg-brand-500/10 px-4 py-3 text-sm text-zinc-300">
+      <SparklesIcon size={16} className="mt-0.5 shrink-0 text-brand-300" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+interface ResultsForProps {
+  term: string;
+  tab: Tab;
+  onSeeAll: (tab: Tab) => void;
+  /** Chamado quando a busca termina sem nenhum resultado. */
+  onEmpty: () => void;
+  fallback: ReactNode;
+}
+
+function ResultsFor(props: ResultsForProps) {
+  if (props.tab === 'all') return <AllResults {...props} />;
+  if (props.tab === 'person') return <PeopleResults {...props} />;
+  return <TabResults {...props} tab={props.tab} />;
+}
+
+function useReportEmpty(isEmpty: boolean, onEmpty: () => void) {
+  const ref = useRef(onEmpty);
+  ref.current = onEmpty;
+  useEffect(() => {
+    if (isEmpty) ref.current();
+  }, [isEmpty]);
+}
+
+function fetchTab(tab: 'movie' | 'tv' | 'anime', term: string, page: number) {
   return tab === 'anime' ? searchAnime(term, page) : searchTmdb(tab, term, page);
 }
 
-function TabResults({ term, tab }: { term: string; tab: Exclude<Tab, 'all'> }) {
+function TabResults({ term, tab, onEmpty, fallback }: ResultsForProps & { tab: 'movie' | 'tv' | 'anime' }) {
   const list = useInfiniteList(`search:${tab}:${term.toLowerCase()}`, (page) => fetchTab(tab, term, page));
+  const isEmpty = !list.loading && !list.error && list.items.length === 0 && !list.hasMore;
+  useReportEmpty(isEmpty, onEmpty);
 
-  if (!list.loading && !list.error && list.items.length === 0) return <NoResults term={term} />;
+  if (isEmpty) return <>{fallback}</>;
   return (
     <MediaGrid
       items={list.items}
@@ -150,24 +269,85 @@ function TabResults({ term, tab }: { term: string; tab: Exclude<Tab, 'all'> }) {
   );
 }
 
-function AllResults({ term, onSeeAll }: { term: string; onSeeAll: (tab: Tab) => void }) {
+function PeopleResults({ term, onEmpty, fallback }: ResultsForProps) {
+  const [pages, setPages] = useState(1);
+  const [items, setItems] = useState<PersonSummary[]>([]);
+  const query = useQuery(`search:person:${term.toLowerCase()}:${pages}`, () => searchPeople(term, pages));
+
+  useEffect(() => {
+    const data = query.data;
+    if (!data) return;
+    setItems((prev) => {
+      const seen = new Set(prev.map((p) => p.id));
+      return [...prev, ...data.items.filter((p) => !seen.has(p.id))];
+    });
+  }, [query.data]);
+
+  const isEmpty = !query.loading && !query.error && pages === 1 && query.data?.items.length === 0;
+  useReportEmpty(isEmpty, onEmpty);
+
+  if (isEmpty) return <>{fallback}</>;
+  if (query.error && !items.length) return <ErrorState message={query.error} onRetry={query.retry} />;
+  return (
+    <>
+      <div className={PEOPLE_GRID}>
+        {items.map((p) => (
+          <PersonCard key={p.id} person={p} />
+        ))}
+        {query.loading && Array.from({ length: 7 }, (_, i) => <PersonCardSkeleton key={`s${i}`} />)}
+      </div>
+      {query.data?.hasMore && !query.loading && (
+        <div className="mt-8 text-center">
+          <button type="button" onClick={() => setPages((p) => p + 1)} className="btn-ghost">
+            Carregar mais
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function AllResults({ term, onSeeAll, onEmpty, fallback }: ResultsForProps) {
   const key = term.toLowerCase();
   const tmdb = useQuery(`search:multi:${key}`, () => searchTmdb('multi', term));
   const anime = useQuery(`search:anime-preview:${key}`, () => searchAnime(term));
+  const people = useQuery(`search:person:${key}:1`, () => searchPeople(term));
 
-  const sections = [
+  const peopleItems = people.data?.items.filter((p) => p.photo || p.knownFor) ?? [];
+  // Pessoas vêm primeiro quando o nome bate com a busca (ex.: "brad pitt").
+  const personFirst = peopleItems.length > 0 && normalize(peopleItems[0].name).startsWith(normalize(term));
+
+  const titleSections = [
     { tab: 'movie' as const, title: 'Filmes', q: tmdb, items: tmdb.data?.items.filter((i) => i.type === 'movie') },
     { tab: 'tv' as const, title: 'Séries', q: tmdb, items: tmdb.data?.items.filter((i) => i.type === 'tv') },
     { tab: 'anime' as const, title: 'Animes', q: anime, items: anime.data?.items },
   ];
 
-  const loading = tmdb.loading || anime.loading;
-  const empty = !loading && sections.every((s) => !s.items?.length) && !tmdb.error && !anime.error;
-  if (empty) return <NoResults term={term} />;
+  const loading = tmdb.loading || anime.loading || people.loading;
+  const isEmpty =
+    !loading &&
+    !tmdb.error &&
+    !anime.error &&
+    titleSections.every((s) => !s.items?.length) &&
+    !(people.data?.items.length ?? 0);
+  useReportEmpty(isEmpty, onEmpty);
+  if (isEmpty) return <>{fallback}</>;
+
+  const peopleSection = peopleItems.length > 0 && (
+    <section key="person">
+      <SectionHeader title="Pessoas" onSeeAll={() => onSeeAll('person')} />
+      <div className={PEOPLE_GRID}>
+        {peopleItems.slice(0, 7).map((p) => (
+          <PersonCard key={p.id} person={p} />
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <div className="space-y-12">
-      {sections.map(({ tab, title, q, items }) => {
+      {personFirst && peopleSection}
+      {titleSections.map(({ tab, title, q, items }) => {
         if (q.error) {
           return (
             <section key={tab}>
@@ -191,12 +371,7 @@ function AllResults({ term, onSeeAll }: { term: string; onSeeAll: (tab: Tab) => 
         if (!items?.length) return null;
         return (
           <section key={tab}>
-            <div className="mb-4 flex items-end justify-between">
-              <h2 className="font-display text-lg font-semibold text-white">{title}</h2>
-              <button onClick={() => onSeeAll(tab)} className="inline-flex items-center gap-0.5 text-sm font-medium text-zinc-400 hover:text-white">
-                Ver todos <ChevronRightIcon size={16} />
-              </button>
-            </div>
+            <SectionHeader title={title} onSeeAll={() => onSeeAll(tab)} />
             <div className={GRID_CLASS}>
               {items.slice(0, 14).map((item) => (
                 <MediaCard key={`${item.type}-${item.id}`} item={item} />
@@ -205,9 +380,33 @@ function AllResults({ term, onSeeAll }: { term: string; onSeeAll: (tab: Tab) => 
           </section>
         );
       })}
+      {!personFirst && peopleSection}
     </div>
   );
 }
+
+function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll: () => void }) {
+  return (
+    <div className="mb-4 flex items-end justify-between">
+      <h2 className="font-display text-lg font-semibold text-white">{title}</h2>
+      <button onClick={onSeeAll} className="inline-flex items-center gap-0.5 text-sm font-medium text-zinc-400 hover:text-white">
+        Ver todos <ChevronRightIcon size={16} />
+      </button>
+    </div>
+  );
+}
+
+function ResultsSkeleton() {
+  return (
+    <div className={GRID_CLASS}>
+      {Array.from({ length: 7 }, (_, i) => (
+        <MediaCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+/* ---------- sem termo / sem resultado ---------- */
 
 function Suggestions({ onPick }: { onPick: (q: string) => void }) {
   const trending = useQuery('trending:all:day', () => getTrending('all', 'day').then((p) => p.items));
@@ -241,12 +440,33 @@ function Suggestions({ onPick }: { onPick: (q: string) => void }) {
   );
 }
 
-function NoResults({ term }: { term: string }) {
+function NoResults({ term, index }: { term: string; index: FuzzyIndex | null }) {
+  // Mesmo sem resultado exato, mostra o que mais se parece com o que foi digitado.
+  const similar = useMemo(
+    () =>
+      (index?.search(term, { limit: 14, minScore: 0.6, kinds: ['movie', 'tv', 'anime'] }) ?? [])
+        .map((m) => entryToItem(m.entry))
+        .filter((i): i is MediaItem => Boolean(i)),
+    [index, term],
+  );
+
   return (
-    <EmptyState
-      icon={<SearchIcon size={26} />}
-      title={`Nada encontrado para “${term}”`}
-      description="Confira a grafia, tente o título original (em inglês ou japonês) ou use menos palavras."
-    />
+    <div className="space-y-12">
+      <EmptyState
+        icon={<SearchIcon size={26} />}
+        title={`Nada encontrado para “${term}”`}
+        description="Confira a grafia, tente o título original (em inglês ou japonês), o nome de um ator ou use menos palavras."
+      />
+      {similar.length > 0 && (
+        <section>
+          <h2 className="font-display text-lg font-semibold text-white">Talvez você esteja procurando</h2>
+          <div className={`${GRID_CLASS} mt-4`}>
+            {similar.map((item) => (
+              <MediaCard key={`${item.type}-${item.id}`} item={item} showType />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }

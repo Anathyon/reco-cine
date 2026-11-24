@@ -66,6 +66,13 @@ test('anime mostra personagens e dubladores', async ({ page }) => {
   await expect(page.getByText('Voz: Dubladora Exemplo')).toBeVisible();
 });
 
+test('sinopse de anime é traduzida, com opção de ver o original', async ({ page }) => {
+  await page.goto('/title/anime/301');
+  await expect(page.getByText('Texto traduzido anime 301.')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver original' }).click();
+  await expect(page.getByText('Sinopse de Anime Kappa.')).toBeVisible();
+});
+
 test('rotas inválidas dão 404 amigável', async ({ page }) => {
   const response = await page.goto('/title/person/1');
   expect(response?.status()).toBe(404);
