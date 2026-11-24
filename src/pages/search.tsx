@@ -9,7 +9,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { useInfiniteList } from '../hooks/useInfiniteList';
 import { useQuery } from '../hooks/useQuery';
 import { getTrending, searchTmdb } from '../lib/tmdb';
-import { searchAnime } from '../lib/jikan';
+import { searchAnime } from '../lib/anime';
 
 type Tab = 'all' | 'movie' | 'tv' | 'anime';
 const TABS: { key: Tab; label: string }[] = [

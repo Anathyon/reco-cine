@@ -4,7 +4,7 @@ import HeroBanner from '../components/media/HeroBanner';
 import { LazyMediaRow, MediaRow } from '../components/media/MediaRow';
 import { useQuery } from '../hooks/useQuery';
 import { getList, getTrending } from '../lib/tmdb';
-import { getSeasonNow, getTopAnime } from '../lib/jikan';
+import { getSeasonNow, getTopAnime } from '../lib/anime';
 import { useFavoritesStore } from '../store/favoritesStore';
 import type { MediaItem } from '../types';
 

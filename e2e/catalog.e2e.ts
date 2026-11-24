@@ -33,7 +33,7 @@ test('"Surpreenda-me" abre um título aleatório', async ({ page }) => {
   await expect(page).toHaveURL(/view=tv-20\d/);
 });
 
-test('animes não têm filtro de streaming (a Jikan não suporta)', async ({ page }) => {
+test('animes não têm filtro de streaming (o MyAnimeList não informa)', async ({ page }) => {
   await mockApis(page);
   await page.goto('/animes');
   await expect(page.getByRole('article')).toHaveCount(2);
@@ -43,7 +43,7 @@ test('animes não têm filtro de streaming (a Jikan não suporta)', async ({ pag
 test('erro na API mostra aviso e "Tentar novamente" recupera', async ({ page }) => {
   await mockApis(page, { failTmdb: /^discover/ });
   await page.goto('/movies');
-  await expect(page.getByRole('alert')).toContainText('Falha simulada do TMDB');
+  await expect(page.getByRole('alert').filter({ hasText: 'Falha simulada do TMDB' })).toBeVisible();
 
   await page.unrouteAll({ behavior: 'ignoreErrors' });
   await mockApis(page);

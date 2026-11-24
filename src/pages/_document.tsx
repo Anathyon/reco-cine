@@ -16,7 +16,7 @@ export default function Document() {
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
         <link rel="preconnect" href="https://image.tmdb.org" />
-        <link rel="preconnect" href="https://api.jikan.moe" />
+        <link rel="preconnect" href="https://cdn.myanimelist.net" />
       </Head>
       <body>
         <Main />

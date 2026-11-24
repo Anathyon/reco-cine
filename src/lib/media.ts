@@ -1,8 +1,8 @@
 import type { CastMember, MediaDetails, MediaItem, MediaType } from '../types';
-import { getAnimeCast, getAnimeDetails, getAnimeRecommendations } from './jikan';
+import { getAnimeCast, getAnimeDetails, getAnimeRecommendations } from './anime';
 import { getRecommendations, getTmdbDetails } from './tmdb';
 
-/** Ponto único para buscar detalhes, independente da origem (TMDB ou Jikan). */
+/** Ponto único para buscar detalhes, independente da origem (TMDB ou MyAnimeList). */
 export function getDetails(type: MediaType, id: number): Promise<MediaDetails> {
   return type === 'anime' ? getAnimeDetails(id) : getTmdbDetails(type, id);
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 /* This is a Node script — not part of the frontend bundle. */
 const fs = require('fs');
 const path = require('path');

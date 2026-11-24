@@ -19,7 +19,7 @@ test('card abre o modal; Esc e "voltar" fecham', async ({ page }) => {
   const dialog = page.getByRole('dialog');
 
   await card.click();
-  await expect(dialog.getByRole('heading', { name: 'Filme Beta' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { level: 2, name: 'Filme Beta' })).toBeVisible();
   await expect(page).toHaveURL(/view=movie-102/);
   await expect(dialog.getByText('Diretora Exemplo')).toBeVisible();
 

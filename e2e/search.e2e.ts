@@ -27,7 +27,7 @@ test('abrir a busca com ?q já mostra os resultados', async ({ page }) => {
 
 test('sem termo, sugere buscas populares', async ({ page }) => {
   await page.goto('/search');
-  await page.getByRole('button', { name: 'Série Sigma' }).click();
+  await page.getByRole('button', { name: 'Série Sigma', exact: true }).click();
   await expect(page.getByRole('searchbox', { name: 'Buscar títulos' })).toHaveValue('Série Sigma');
   await expect(page).toHaveURL(/q=S%C3%A9rie(\+|%20)Sigma/);
 });

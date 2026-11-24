@@ -1,5 +1,5 @@
 import CatalogView from '../components/CatalogView';
-import { ANIME_GENRES, discoverAnime } from '../lib/jikan';
+import { ANIME_GENRES, discoverAnime } from '../lib/anime';
 
 export default function AnimesPage() {
   return (

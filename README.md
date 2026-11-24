@@ -37,7 +37,7 @@ Descubra filmes, séries e animes, assista aos trailers, veja **onde assistir no
 src/
   components/     layout (Header, BottomNav, Footer), media (cards, fileiras, grade, modal) e ui
   hooks/          useQuery (cache), useInfiniteList, useDetailsRoute, useDebounce, useInView
-  lib/            clientes TMDB e Jikan normalizados para um formato único (MediaItem);
+  lib/            clientes TMDB e MyAnimeList normalizados para um formato único (MediaItem);
                   *Server.ts só rodam no servidor (leem a chave)
   pages/          páginas, title/[type]/[id] (página do título) e api/tmdb/[...path].ts (proxy)
 e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
@@ -49,7 +49,8 @@ e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
 ## 📊 APIs
 
 - **[TMDB](https://developer.themoviedb.org/)** — filmes e séries (em pt-BR). As chamadas passam pela rota `/api/tmdb/*`, então **a chave fica só no servidor** e as respostas são cacheadas na CDN.
-- **[Jikan](https://jikan.moe/)** (MyAnimeList) — animes. As requisições passam por uma fila para respeitar o limite de ~3 req/s.
+- **[MyAnimeList](https://myanimelist.net/apiconfig/references/api/v2)** (API oficial v2) — animes. As chamadas passam pela rota `/api/anime/*`, então **o Client ID fica só no servidor**. A API oficial não filtra por gênero (o filtro é feito no servidor) e não tem personagens nem trailers.
+- **[Jikan](https://jikan.moe/)** — complemento opcional: personagens, dubladores, trailers e onde assistir. Se estiver fora do ar, essas seções só ficam vazias.
 
 ---
 
@@ -62,6 +63,7 @@ Variáveis de ambiente (veja `.env.example`):
 | `NEXT_PUBLIC_TMDB_API_KEY` (ou `TMDB_API_KEY`) | ✅ | Chave v3 do TMDB |
 | `NEXT_PUBLIC_TMDB_BASE_URL` | | `https://api.themoviedb.org/3` |
 | `NEXT_PUBLIC_TMDB_IMAGE_BASE` | | `https://image.tmdb.org/t/p` |
+| `MAL_CLIENT_ID` | ✅ | Client ID do app em [myanimelist.net/apiconfig](https://myanimelist.net/apiconfig) |
 | `NEXT_PUBLIC_JIKAN_BASE_URL` | | `https://api.jikan.moe/v4` |
 | `NEXT_PUBLIC_SITE_URL` | | URL pública do site, para os links das prévias. Na Vercel é detectada automaticamente. |
 

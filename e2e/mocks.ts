@@ -1,7 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
 /*
- * Respostas simuladas do TMDB (via /api/tmdb) e da Jikan.
+ * Respostas simuladas do TMDB (via /api/tmdb) e do MyAnimeList (via /api/anime).
  * Os dados são fictícios, mas seguem o formato real das APIs.
  */
 
@@ -39,17 +39,18 @@ export const SERIES: Raw[] = [
 }));
 
 export const ANIMES: Raw[] = [
-  { mal_id: 301, title: 'Anime Kappa', title_english: 'Kappa Chronicles', score: 8.9, year: 2023 },
-  { mal_id: 302, title: 'Anime Lambda', title_english: null, score: 7.4, year: 2021 },
+  { id: 301, title: 'Kappa Chronicles', originalTitle: 'Anime Kappa', rating: 8.9, year: '2023' },
+  { id: 302, title: 'Anime Lambda', originalTitle: null, rating: 7.4, year: '2021' },
 ].map((a) => ({
   ...a,
-  synopsis: `Sinopse de ${a.title}. [Written by MAL Rewrite]`,
-  images: { jpg: { image_url: `https://cdn.myanimelist.net/${a.mal_id}.jpg`, large_image_url: `https://cdn.myanimelist.net/${a.mal_id}l.jpg` } },
-  trailer: { youtube_id: null, embed_url: null, images: {} },
+  type: 'anime',
+  overview: `Sinopse de ${a.originalTitle || a.title}.`,
+  poster: `https://cdn.myanimelist.net/${a.id}l.jpg`,
+  backdrop: null,
 }));
 
 const list = (results: Raw[]) => ({ page: 1, total_pages: 1, total_results: results.length, results });
-const jikanList = (data: Raw[]) => ({ data, pagination: { current_page: 1, has_next_page: false } });
+const animePage = (items: Raw[]) => ({ items: items.map(({ originalTitle: _o, ...item }) => item), page: 1, hasMore: false });
 
 function tmdbDetails(type: 'movie' | 'tv', raw: Raw) {
   return {
@@ -121,34 +122,39 @@ function handleTmdb(route: Route, options: MockOptions) {
   return json({ status_message: `rota não simulada: ${path}` }, 404);
 }
 
-function handleJikan(route: Route) {
+function handleAnime(route: Route) {
   const url = new URL(route.request().url());
-  const path = url.pathname.replace(/^\/v4\//, '');
+  const path = url.pathname.replace(/^\/api\/anime\//, '');
   const json = (body: unknown, status = 200) => route.fulfill({ status, json: body });
 
-  if (path === 'seasons/now' || path === 'top/anime') return json(jikanList(ANIMES));
-  if (path === 'anime') {
+  if (path === 'season' || path === 'top' || path === 'discover') return json(animePage(ANIMES));
+  if (path === 'search') {
     const q = (url.searchParams.get('q') || '').toLowerCase();
-    return json(jikanList(q ? ANIMES.filter((a) => `${a.title} ${a.title_english}`.toLowerCase().includes(q)) : ANIMES));
+    return json(animePage(ANIMES.filter((a) => `${a.title} ${a.originalTitle}`.toLowerCase().includes(q))));
   }
-  const match = path.match(/^anime\/(\d+)\/(full|characters|recommendations)$/);
-  const anime = match && ANIMES.find((a) => a.mal_id === Number(match[1]));
+  const match = path.match(/^(\d+)(?:\/(characters|recommendations))?$/);
+  const anime = match && ANIMES.find((a) => a.id === Number(match[1]));
   if (match && anime) {
-    if (match[2] === 'characters') {
-      return json({
-        data: [
-          {
-            role: 'Main',
-            character: { mal_id: 1, name: 'Personagem Principal', images: {} },
-            voice_actors: [{ language: 'Japanese', person: { name: 'Dubladora Exemplo' } }],
-          },
-        ],
-      });
-    }
-    if (match[2] === 'recommendations') return json({ data: [] });
-    return json({ data: { ...anime, status: 'Finished Airing', episodes: 12, studios: [{ name: 'Estúdio X' }], genres: [], themes: [], streaming: [] } });
+    if (match[2] === 'characters') return json([{ id: 1, name: 'Personagem Principal', role: 'Voz: Dubladora Exemplo', photo: null }]);
+    if (match[2] === 'recommendations') return json([]);
+    return json({
+      ...anime,
+      tagline: null,
+      genres: [],
+      facts: [
+        { label: 'Episódios', value: '12' },
+        { label: 'Estúdio', value: 'Estúdio X' },
+        { label: 'Status', value: 'Finalizado' },
+      ],
+      cast: [],
+      trailerKey: null,
+      providers: [],
+      providersLink: null,
+      externalUrl: `https://myanimelist.net/anime/${anime.id}`,
+      externalLabel: 'Ver no MyAnimeList',
+    });
   }
-  return json({ status: 404 }, 404);
+  return json({ error: 'Anime não encontrado' }, 404);
 }
 
 export async function mockApis(page: Page, options: MockOptions = {}) {
@@ -157,5 +163,5 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
   await page.route('https://cdn.myanimelist.net/**', image);
   await page.route('https://www.youtube-nocookie.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>trailer</p>' }));
   await page.route('**/api/tmdb/**', (route) => handleTmdb(route, options));
-  await page.route('https://api.jikan.moe/**', handleJikan);
+  await page.route('**/api/anime/**', handleAnime);
 }

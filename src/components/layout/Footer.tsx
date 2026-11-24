@@ -40,8 +40,8 @@ export default function Footer() {
               TMDB
             </a>{' '}
             e de animes por{' '}
-            <a href="https://jikan.moe" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white">
-              Jikan/MyAnimeList
+            <a href="https://myanimelist.net" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-white">
+              MyAnimeList
             </a>
             . Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.
           </p>
