@@ -14,6 +14,14 @@ import { personHref } from '../../lib/people';
 import { ErrorState } from '../ui/States';
 import { ExternalIcon, PlayIcon, ShareIcon, StarIcon, XIcon } from '../ui/Icons';
 
+/** De onde vêm os links de "Onde assistir/ler" (cada fonte cobre uma coisa). */
+const SOURCE_NOTE: Record<MediaType, string> = {
+  movie: 'Disponibilidade no Brasil · dados JustWatch',
+  tv: 'Disponibilidade no Brasil · dados JustWatch',
+  anime: 'Links oficiais (podem variar por país) · MyAnimeList e AniList',
+  manga: 'Leitura oficial (pode variar por país) · dados AniList',
+};
+
 interface Props {
   type: MediaType;
   id: number;
@@ -159,48 +167,51 @@ export default function DetailsView({ type, id, initialDetails, variant = 'modal
           </div>
 
           <aside className="space-y-8">
-            {d.type !== 'manga' && (
-              <section>
-                <h3 className="section-title">Onde assistir</h3>
-                {d.providers.length > 0 ? (
-                  <>
-                    <ul className="flex flex-wrap gap-2">
-                      {d.providers.map((p) => {
-                        const content = (
-                          <>
-                            {p.logo && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={p.logo} alt="" className="h-7 w-7 rounded-md" loading="lazy" />
-                            )}
-                            <span className="text-xs font-medium text-zinc-200">{p.name}</span>
-                          </>
-                        );
-                        const href = p.url || d.providersLink;
-                        return (
-                          <li key={p.name}>
-                            {href ? (
-                              <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10 transition hover:bg-white/10"
-                              >
-                                {content}
-                              </a>
-                            ) : (
-                              <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10">{content}</div>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    {d.type !== 'anime' && <p className="mt-2 text-[11px] text-zinc-500">Disponibilidade no Brasil · dados JustWatch</p>}
-                  </>
-                ) : (
-                  <p className="text-sm text-zinc-500">Sem informação de streaming no Brasil.</p>
-                )}
-              </section>
-            )}
+            <section>
+              <h3 className="section-title">{d.type === 'manga' ? 'Onde ler' : 'Onde assistir'}</h3>
+              {d.providers.length > 0 ? (
+                <>
+                  <ul className="flex flex-wrap gap-2">
+                    {d.providers.map((p) => {
+                      const content = (
+                        <>
+                          {p.logo && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.logo} alt="" className="h-7 w-7 rounded-md" loading="lazy" />
+                          )}
+                          <span className="text-xs font-medium text-zinc-200">
+                            {p.name}
+                            {p.language && <span className="font-normal text-zinc-500"> · {p.language}</span>}
+                          </span>
+                        </>
+                      );
+                      const href = p.url || d.providersLink;
+                      return (
+                        <li key={`${p.name}-${p.language ?? ''}`}>
+                          {href ? (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pr-3 ring-1 ring-white/10 transition hover:bg-white/10 ${p.logo ? 'pl-1.5' : 'min-h-10 pl-3'}`}
+                            >
+                              {content}
+                            </a>
+                          ) : (
+                            <div className={`flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pr-3 ring-1 ring-white/10 ${p.logo ? 'pl-1.5' : 'pl-3'}`}>{content}</div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="mt-2 text-[11px] text-zinc-500">{SOURCE_NOTE[d.type]}</p>
+                </>
+              ) : (
+                <p className="text-sm text-zinc-500">
+                  {d.type === 'manga' ? 'Sem links oficiais de leitura conhecidos.' : 'Sem informação de streaming no Brasil.'}
+                </p>
+              )}
+            </section>
 
             {d.facts.length > 0 && (
               <section>

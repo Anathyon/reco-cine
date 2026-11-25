@@ -2,8 +2,9 @@
  * Mangás (e manhwas, manhuas e light novels) pela API oficial do MyAnimeList.
  * SOMENTE no servidor (rota /api/manga e getStaticProps): lê o Client ID.
  */
-import type { MediaDetails, MediaItem, Page } from '../types';
+import type { MediaDetails, MediaItem, Page, Provider } from '../types';
 import { formatDate, uniqueBy } from './format';
+import { anilistLinks } from './anilistServer';
 import { PAGE_SIZE, SCAN_CHUNK, SCAN_MAX_CHUNKS, cleanSynopsis, genreName, isSafe, mal, nodes } from './malServer';
 
 export type MangaSort = 'popular' | 'top';
@@ -120,7 +121,7 @@ function authors(list: any[] = []): string {
     .join(', ');
 }
 
-export function normalizeMangaDetails(id: number, m: any): MediaDetails {
+export function normalizeMangaDetails(id: number, m: any, readLinks: Provider[] = []): MediaDetails {
   const base = toMangaItem(m);
   const facts: { label: string; value: string }[] = [];
   const push = (label: string, value: string | null | undefined) => value && facts.push({ label, value });
@@ -142,7 +143,7 @@ export function normalizeMangaDetails(id: number, m: any): MediaDetails {
     facts,
     cast: [],
     trailerKey: null,
-    providers: [],
+    providers: readLinks,
     providersLink: null,
     externalUrl: `https://myanimelist.net/manga/${id}`,
     externalLabel: 'Ver no MyAnimeList',
@@ -151,8 +152,10 @@ export function normalizeMangaDetails(id: number, m: any): MediaDetails {
 
 const rawDetails = (id: number) => mal(`manga/${id}`, { fields: DETAILS_FIELDS });
 
+/** Detalhes do MAL + onde ler oficialmente (AniList; vazio se ela falhar). */
 export async function mangaDetails(id: number): Promise<MediaDetails> {
-  return normalizeMangaDetails(id, await rawDetails(id));
+  const [raw, links] = await Promise.all([rawDetails(id), anilistLinks(id, 'MANGA')]);
+  return normalizeMangaDetails(id, raw, links);
 }
 
 export async function mangaRecommendations(id: number): Promise<MediaItem[]> {

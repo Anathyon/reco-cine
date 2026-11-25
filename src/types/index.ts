@@ -23,6 +23,8 @@ export interface Provider {
   name: string;
   logo: string | null;
   url?: string;
+  /** Idioma do serviço, quando importa (ex.: MANGA Plus em português). */
+  language?: string;
 }
 
 export interface MediaDetails extends MediaItem {

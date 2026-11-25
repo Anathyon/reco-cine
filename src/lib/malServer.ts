@@ -5,9 +5,10 @@
  * A API oficial não tem personagens nem trailers; esses dados vêm da Jikan
  * (espelho não oficial do MAL) quando ela está no ar, sem bloquear o resto.
  */
-import type { CastMember, MediaDetails, MediaItem, Page } from '../types';
+import type { CastMember, MediaDetails, MediaItem, Page, Provider } from '../types';
 import { formatDate, uniqueBy } from './format';
 import type { AnimeSort } from './anime';
+import { anilistLinks, mergeProviders } from './anilistServer';
 
 export const PAGE_SIZE = 24;
 
@@ -265,8 +266,9 @@ async function rawDetails(id: number) {
 }
 
 export async function animeDetails(id: number): Promise<MediaDetails> {
-  const [raw, extras] = await Promise.all([rawDetails(id), jikanExtras(id)]);
-  return normalizeMalDetails(id, raw, extras);
+  const [raw, extras, links] = await Promise.all([rawDetails(id), jikanExtras(id), anilistLinks(id, 'ANIME')]);
+  // Jikan primeiro; a AniList completa (ou substitui, quando a Jikan está fora do ar).
+  return normalizeMalDetails(id, raw, { ...extras, providers: mergeProviders(extras.providers ?? [], links) });
 }
 
 export async function animeRecommendations(id: number): Promise<MediaItem[]> {
@@ -279,7 +281,7 @@ export async function animeRecommendations(id: number): Promise<MediaItem[]> {
 export interface JikanExtras {
   trailerKey?: string | null;
   backdrop?: string | null;
-  providers?: { name: string; logo: null; url: string }[];
+  providers?: Provider[];
 }
 
 async function jikan<T = any>(path: string, timeoutMs: number): Promise<T | null> {

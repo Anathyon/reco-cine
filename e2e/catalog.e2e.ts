@@ -51,7 +51,7 @@ test('erro na API mostra aviso e "Tentar novamente" recupera', async ({ page }) 
   await expect(page.getByRole('article')).toHaveCount(4);
 });
 
-test('mangás: catálogo sem filtro de ano e detalhes sem "Onde assistir"', async ({ page }) => {
+test('mangás: catálogo sem filtro de ano e detalhes com "Onde ler"', async ({ page }) => {
   await mockApis(page);
   await page.goto('/mangas');
   await expect(page.getByRole('article')).toHaveCount(2);
@@ -62,5 +62,9 @@ test('mangás: catálogo sem filtro de ano e detalhes sem "Onde assistir"', asyn
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('Volumes')).toBeVisible();
   await expect(dialog.getByRole('heading', { name: 'Onde assistir' })).toHaveCount(0);
+  await expect(dialog.getByRole('heading', { name: 'Onde ler' })).toBeVisible();
+  const link = dialog.getByRole('link', { name: /MANGA Plus · Português/ });
+  await expect(link).toHaveAttribute('href', 'https://mangaplus.shueisha.co.jp/titles/1');
+  await expect(link).toHaveAttribute('target', '_blank');
   await expect(page).toHaveURL(/view=manga-401/);
 });

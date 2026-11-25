@@ -227,7 +227,7 @@ function handleManga(route: Route) {
       ],
       cast: [],
       trailerKey: null,
-      providers: [],
+      providers: [{ name: 'MANGA Plus', logo: null, url: 'https://mangaplus.shueisha.co.jp/titles/1', language: 'Português' }],
       providersLink: null,
       externalUrl: `https://myanimelist.net/manga/${manga.id}`,
       externalLabel: 'Ver no MyAnimeList',
