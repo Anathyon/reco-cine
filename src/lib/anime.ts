@@ -5,12 +5,20 @@
  */
 import type { CastMember, Genre, MediaDetails, MediaItem, Page } from '../types';
 import { ApiError } from './tmdb';
+import { adultAuthHeader } from './adult';
 
 export type AnimeSort = 'popular' | 'top' | 'recent';
 
 const TIMEOUT_MS = 20000;
 
-async function request<T>(path: string, params: Record<string, string | number | undefined> = {}, signal?: AbortSignal): Promise<T> {
+async function request<T>(
+  path: string,
+  params: Record<string, string | number | undefined> = {},
+  signal?: AbortSignal,
+  adult = false,
+): Promise<T> {
+  if (adult) params = { ...params, adult: 1 };
+  const headers = adult ? await adultAuthHeader() : undefined;
   const search = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') search.set(k, String(v));
   const qs = search.toString();
@@ -22,7 +30,7 @@ async function request<T>(path: string, params: Record<string, string | number |
 
   let res: Response;
   try {
-    res = await fetch(`/api/anime/${path}${qs ? `?${qs}` : ''}`, { signal: controller.signal });
+    res = await fetch(`/api/anime/${path}${qs ? `?${qs}` : ''}`, headers ? { signal: controller.signal, headers } : { signal: controller.signal });
   } catch (err) {
     if (signal?.aborted) throw err;
     throw new ApiError('O serviço de animes (MyAnimeList) não respondeu. Tente novamente em instantes.');
@@ -52,8 +60,9 @@ export function discoverAnime(opts: { genre?: number; sort?: AnimeSort; page?: n
   return request<Page<MediaItem>>('discover', { page: opts.page ?? 1, genre: opts.genre, sort: opts.sort, year: opts.year });
 }
 
-export function searchAnime(query: string, page = 1, signal?: AbortSignal) {
-  return request<Page<MediaItem>>('search', { q: query, page }, signal);
+/** `adult`: inclui títulos +18 (o servidor confere login e idade). */
+export function searchAnime(query: string, page = 1, signal?: AbortSignal, adult = false) {
+  return request<Page<MediaItem>>('search', { q: query, page }, signal, adult);
 }
 
 /* ---------- detalhes ---------- */

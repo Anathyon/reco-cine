@@ -3,7 +3,11 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import handler from '../../pages/api/tmdb/[...path]';
+import { checkAdult } from '../../lib/adultServer';
 import { jsonResponse } from '../../test/utils';
+
+jest.mock('../../lib/adultServer', () => ({ ...jest.requireActual('../../lib/adultServer'), checkAdult: jest.fn() }));
+const checkAdultMock = checkAdult as jest.Mock;
 
 interface MockRes {
   statusCode: number;
@@ -57,6 +61,7 @@ beforeEach(() => {
   delete process.env.NEXT_PUBLIC_TMDB_API_KEY;
   fetchMock = jest.fn().mockResolvedValue(jsonResponse({ results: [] }));
   global.fetch = fetchMock as unknown as typeof fetch;
+  checkAdultMock.mockReset().mockResolvedValue('signedOut');
 });
 afterAll(() => {
   process.env = ENV;
@@ -128,4 +133,41 @@ it('responde 502 quando o TMDB está fora do ar', async () => {
   fetchMock.mockRejectedValue(new Error('ECONNRESET'));
   const res = await call(req(['movie', '550']));
   expect(res.statusCode).toBe(502);
+});
+
+describe('conteúdo +18', () => {
+  const upstream = () => new URL(fetchMock.mock.calls[0][0]).searchParams;
+
+  it('busca e descoberta sem +18, mesmo que o navegador peça include_adult=true', async () => {
+    await call(req(['search', 'movie'], { query: 'x', include_adult: 'true' }));
+    expect(upstream().get('include_adult')).toBe('false');
+    expect(checkAdultMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['signedOut', 401],
+    ['noBirthDate', 403],
+    ['underage', 403],
+    ['error', 503],
+  ])('recusa adult=1 quando a conferência dá %s', async (check, status) => {
+    checkAdultMock.mockResolvedValue(check);
+    const res = await call(req(['search', 'multi'], { query: 'x', adult: '1' }));
+    expect(res.statusCode).toBe(status);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('libera +18 para maior de idade, sem cache público', async () => {
+    checkAdultMock.mockResolvedValue('ok');
+    const res = await call(req(['search', 'multi'], { query: 'x', adult: '1' }));
+    expect(upstream().get('include_adult')).toBe('true');
+    expect(upstream().has('adult')).toBe(false);
+    expect(res.headers['cache-control']).toBe('private, no-store');
+  });
+
+  it('adult=1 só vale para buscas', async () => {
+    checkAdultMock.mockResolvedValue('ok');
+    await call(req(['discover', 'movie'], { adult: '1' }));
+    expect(checkAdultMock).not.toHaveBeenCalled();
+    expect(upstream().get('include_adult')).toBe('false');
+  });
 });

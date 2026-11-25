@@ -1,6 +1,8 @@
 import { ApiError, discover, getStreamingProviders, getTmdbDetails, getTrending, searchTmdb, tmdbImage } from '../tmdb';
 import { calledUrl, jsonResponse, mockFetch } from '../../test/utils';
 
+jest.mock('../adult', () => ({ adultAuthHeader: jest.fn().mockResolvedValue({ Authorization: 'Bearer token-de-teste' }) }));
+
 const rawMovie = {
   id: 550,
   title: 'Clube da Luta',
@@ -62,10 +64,19 @@ describe('listas', () => {
     expect(page.hasMore).toBe(true);
   });
 
-  it('a busca é completa: inclui títulos adultos', async () => {
+  it('a busca comum não pede +18 nem envia o login', async () => {
     const fetch = mockFetch(jsonResponse({ page: 1, total_pages: 1, results: [] }));
     await searchTmdb('movie', 'qualquer');
-    expect(calledUrl(fetch).params.include_adult).toBe('true');
+    expect(calledUrl(fetch).params.adult).toBeUndefined();
+    expect(calledUrl(fetch).params.include_adult).toBeUndefined();
+    expect(fetch.mock.calls[0][1].headers).toBeUndefined();
+  });
+
+  it('a busca +18 pede adult=1 e envia o token de login', async () => {
+    const fetch = mockFetch(jsonResponse({ page: 1, total_pages: 1, results: [] }));
+    await searchTmdb('movie', 'qualquer', 1, undefined, true);
+    expect(calledUrl(fetch).params.adult).toBe('1');
+    expect(fetch.mock.calls[0][1].headers).toEqual({ Authorization: 'Bearer token-de-teste' });
   });
 
   it('não exibe nota quando o título não tem votos', async () => {

@@ -1,5 +1,6 @@
 import type { Genre, MediaDetails, MediaItem, Page, Provider } from '../types';
 import { formatDate, formatRuntime, languageName, uniqueBy, yearOf } from './format';
+import { adultAuthHeader } from './adult';
 
 /*
  * Cliente do TMDB usado no navegador: fala só com o proxy /api/tmdb.
@@ -27,9 +28,14 @@ export function toSearchParams(params: Params): URLSearchParams {
   return search;
 }
 
-export async function request<T = any>(path: string, params: Params = {}, signal?: AbortSignal): Promise<T> {
-  const qs = toSearchParams(params).toString();
-  const res = await fetch(`/api/tmdb/${path}${qs ? `?${qs}` : ''}`, { signal });
+/**
+ * `adult`: pede resultados +18. O servidor só atende com o login de alguém
+ * com 18 anos ou mais; o token vai no cabeçalho.
+ */
+export async function request<T = any>(path: string, params: Params = {}, signal?: AbortSignal, adult = false): Promise<T> {
+  const qs = toSearchParams(adult ? { ...params, adult: 1 } : params).toString();
+  const headers = adult ? await adultAuthHeader() : undefined;
+  const res = await fetch(`/api/tmdb/${path}${qs ? `?${qs}` : ''}`, headers ? { signal, headers } : { signal });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new ApiError(body?.error || body?.status_message || `Erro ${res.status} ao consultar o TMDB`);
@@ -116,9 +122,9 @@ export async function discover(type: TmdbType, opts: DiscoverOptions) {
   return normalizePage(await request(`discover/${type}`, discoverParams(type, opts)), type);
 }
 
-export async function searchTmdb(type: TmdbType | 'multi', query: string, page = 1, signal?: AbortSignal) {
-  // Busca completa: inclui títulos adultos, para que qualquer título pesquisado seja encontrado.
-  const data = await request(`search/${type}`, { query, page, include_adult: 'true' }, signal);
+export async function searchTmdb(type: TmdbType | 'multi', query: string, page = 1, signal?: AbortSignal, adult = false) {
+  // Títulos +18 só com `adult` (o servidor confere login e idade).
+  const data = await request(`search/${type}`, { query, page }, signal, adult);
   return normalizePage(data, type === 'multi' ? undefined : type);
 }
 

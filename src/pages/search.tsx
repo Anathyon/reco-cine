@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import AdultFilter from '../components/AdultFilter';
 import MediaGrid, { GRID_CLASS } from '../components/media/MediaGrid';
 import MediaCard, { MediaCardSkeleton } from '../components/media/MediaCard';
 import PersonCard, { PEOPLE_GRID, PersonCardSkeleton } from '../components/media/PersonCard';
@@ -14,6 +15,7 @@ import { searchAnime } from '../lib/anime';
 import { searchPeople, type PersonSummary } from '../lib/people';
 import { didYouMean, normalize, type FuzzyIndex, type FuzzyMatch } from '../lib/fuzzy';
 import { entryToItem, fetchSpellSuggestion, loadSearchIndex } from '../lib/searchIndex';
+import { useAdultAccess } from '../store/adultStore';
 import type { MediaItem } from '../types';
 
 type Tab = 'all' | 'movie' | 'tv' | 'anime' | 'person';
@@ -77,6 +79,8 @@ export default function SearchPage() {
   };
 
   const correction = useMemo(() => (index.data && term ? didYouMean(index.data, term) : null), [index.data, term]);
+  // Resultados +18 só para quem está logado e tem 18 anos ou mais (o servidor confere de novo).
+  const { enabled: adult } = useAdultAccess();
 
   return (
     <>
@@ -137,14 +141,17 @@ export default function SearchPage() {
           ))}
         </div>
 
+        <AdultFilter />
+
         <div className="mt-8">
           {!term ? (
             <Suggestions onPick={updateInput} />
           ) : (
             <Results
-              key={`${tab}:${term.toLowerCase()}`}
+              key={`${tab}:${term.toLowerCase()}:${adult ? 'adult' : 'safe'}`}
               term={term}
               tab={tab}
+              adult={adult}
               index={index.data ?? null}
               correction={correction}
               onSearch={searchFor}
@@ -162,6 +169,7 @@ export default function SearchPage() {
 interface ResultsProps {
   term: string;
   tab: Tab;
+  adult: boolean;
   index: FuzzyIndex | null;
   correction: FuzzyMatch | null;
   onSearch: (q: string) => void;
@@ -172,7 +180,7 @@ interface ResultsProps {
  * Busca o termo; se nada for encontrado, tenta a grafia corrigida (do índice
  * ou, em último caso, do Google) e mostra esses resultados, como o Google faz.
  */
-function Results({ term, tab, index, correction, onSearch, onSeeAll }: ResultsProps) {
+function Results({ term, tab, adult, index, correction, onSearch, onSeeAll }: ResultsProps) {
   const [empty, setEmpty] = useState(false);
   const spell = useQuery(empty && !correction ? `spell:${term.toLowerCase()}` : null, () => fetchSpellSuggestion(term));
   const fixed = empty ? correction?.name ?? (spell.data && normalize(spell.data) !== normalize(term) ? spell.data : null) : null;
@@ -187,7 +195,7 @@ function Results({ term, tab, index, correction, onSearch, onSeeAll }: ResultsPr
           </button>
           .
         </Notice>
-        <ResultsFor term={fixed} tab={tab} onSeeAll={onSeeAll} onEmpty={() => undefined} fallback={<NoResults term={term} index={index} />} />
+        <ResultsFor term={fixed} tab={tab} adult={adult} onSeeAll={onSeeAll} onEmpty={() => undefined} fallback={<NoResults term={term} index={index} />} />
       </>
     );
   }
@@ -206,6 +214,7 @@ function Results({ term, tab, index, correction, onSearch, onSeeAll }: ResultsPr
       <ResultsFor
         term={term}
         tab={tab}
+        adult={adult}
         onSeeAll={onSeeAll}
         onEmpty={() => setEmpty(true)}
         // Enquanto a correção não chega, mostra carregando (sem piscar "nada encontrado").
@@ -227,6 +236,7 @@ function Notice({ children }: { children: ReactNode }) {
 interface ResultsForProps {
   term: string;
   tab: Tab;
+  adult: boolean;
   onSeeAll: (tab: Tab) => void;
   /** Chamado quando a busca termina sem nenhum resultado. */
   onEmpty: () => void;
@@ -247,12 +257,15 @@ function useReportEmpty(isEmpty: boolean, onEmpty: () => void) {
   }, [isEmpty]);
 }
 
-function fetchTab(tab: 'movie' | 'tv' | 'anime', term: string, page: number) {
-  return tab === 'anime' ? searchAnime(term, page) : searchTmdb(tab, term, page);
+function fetchTab(tab: 'movie' | 'tv' | 'anime', term: string, page: number, adult: boolean) {
+  return tab === 'anime' ? searchAnime(term, page, undefined, adult) : searchTmdb(tab, term, page, undefined, adult);
 }
 
-function TabResults({ term, tab, onEmpty, fallback }: ResultsForProps & { tab: 'movie' | 'tv' | 'anime' }) {
-  const list = useInfiniteList(`search:${tab}:${term.toLowerCase()}`, (page) => fetchTab(tab, term, page));
+/** Separa no cache as buscas com e sem +18. */
+const mode = (adult: boolean) => (adult ? ':adult' : '');
+
+function TabResults({ term, tab, adult, onEmpty, fallback }: ResultsForProps & { tab: 'movie' | 'tv' | 'anime' }) {
+  const list = useInfiniteList(`search:${tab}:${term.toLowerCase()}${mode(adult)}`, (page) => fetchTab(tab, term, page, adult));
   const isEmpty = !list.loading && !list.error && list.items.length === 0 && !list.hasMore;
   useReportEmpty(isEmpty, onEmpty);
 
@@ -269,10 +282,10 @@ function TabResults({ term, tab, onEmpty, fallback }: ResultsForProps & { tab: '
   );
 }
 
-function PeopleResults({ term, onEmpty, fallback }: ResultsForProps) {
+function PeopleResults({ term, adult, onEmpty, fallback }: ResultsForProps) {
   const [pages, setPages] = useState(1);
   const [items, setItems] = useState<PersonSummary[]>([]);
-  const query = useQuery(`search:person:${term.toLowerCase()}:${pages}`, () => searchPeople(term, pages));
+  const query = useQuery(`search:person:${term.toLowerCase()}:${pages}${mode(adult)}`, () => searchPeople(term, pages, adult));
 
   useEffect(() => {
     const data = query.data;
@@ -307,11 +320,11 @@ function PeopleResults({ term, onEmpty, fallback }: ResultsForProps) {
   );
 }
 
-function AllResults({ term, onSeeAll, onEmpty, fallback }: ResultsForProps) {
+function AllResults({ term, adult, onSeeAll, onEmpty, fallback }: ResultsForProps) {
   const key = term.toLowerCase();
-  const tmdb = useQuery(`search:multi:${key}`, () => searchTmdb('multi', term));
-  const anime = useQuery(`search:anime-preview:${key}`, () => searchAnime(term));
-  const people = useQuery(`search:person:${key}:1`, () => searchPeople(term));
+  const tmdb = useQuery(`search:multi:${key}${mode(adult)}`, () => searchTmdb('multi', term, 1, undefined, adult));
+  const anime = useQuery(`search:anime-preview:${key}${mode(adult)}`, () => searchAnime(term, 1, undefined, adult));
+  const people = useQuery(`search:person:${key}:1${mode(adult)}`, () => searchPeople(term, 1, adult));
 
   const peopleItems = people.data?.items.filter((p) => p.photo || p.knownFor) ?? [];
   // Pessoas vêm primeiro quando o nome bate com a busca (ex.: "brad pitt").

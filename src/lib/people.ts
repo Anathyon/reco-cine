@@ -134,8 +134,8 @@ export function normalizePerson(raw: any): PersonDetails {
 
 export const PERSON_PARAMS = { append_to_response: 'combined_credits' };
 
-export async function searchPeople(query: string, page = 1): Promise<Page<PersonSummary>> {
-  const data = await request('search/person', { query, page, include_adult: 'true' });
+export async function searchPeople(query: string, page = 1, adult = false): Promise<Page<PersonSummary>> {
+  const data = await request('search/person', { query, page }, undefined, adult);
   return {
     items: uniqueBy((data.results || []).map(toPersonSummary), (p: PersonSummary) => p.id),
     page: data.page || 1,

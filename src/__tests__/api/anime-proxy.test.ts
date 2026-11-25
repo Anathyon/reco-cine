@@ -3,7 +3,11 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import handler from '../../pages/api/anime/[...path]';
+import { checkAdult } from '../../lib/adultServer';
 import { jsonResponse } from '../../test/utils';
+
+jest.mock('../../lib/adultServer', () => ({ ...jest.requireActual('../../lib/adultServer'), checkAdult: jest.fn() }));
+const checkAdultMock = checkAdult as jest.Mock;
 
 interface MockRes {
   statusCode: number;
@@ -56,6 +60,7 @@ beforeEach(() => {
   process.env = { ...ENV, MAL_CLIENT_ID: 'client-id-secreto' };
   fetchMock = jest.fn().mockResolvedValue(jsonResponse({ data: [], paging: {} }));
   global.fetch = fetchMock as unknown as typeof fetch;
+  checkAdultMock.mockReset().mockResolvedValue('signedOut');
 });
 afterAll(() => {
   process.env = ENV;
@@ -117,4 +122,28 @@ it('responde 502 quando o MAL está fora do ar', async () => {
   fetchMock.mockRejectedValue(new Error('ECONNRESET'));
   const res = await call(req(['season']));
   expect(res.statusCode).toBe(502);
+});
+
+describe('busca +18', () => {
+  const sent = () => new URL(fetchMock.mock.calls[0][0]).searchParams;
+
+  it('sem adult=1, não pede títulos +18 ao MyAnimeList', async () => {
+    const res = await call(req(['search'], { q: 'overflow' }));
+    expect(sent().has('nsfw')).toBe(false);
+    expect(res.headers['cache-control']).toContain('public');
+  });
+
+  it('recusa adult=1 sem login de maior de idade', async () => {
+    checkAdultMock.mockResolvedValue('underage');
+    const res = await call(req(['search'], { q: 'overflow', adult: '1' }));
+    expect(res.statusCode).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('libera para maior de idade, sem cache público', async () => {
+    checkAdultMock.mockResolvedValue('ok');
+    const res = await call(req(['search'], { q: 'overflow', adult: '1' }));
+    expect(sent().get('nsfw')).toBe('true');
+    expect(res.headers['cache-control']).toBe('private, no-store');
+  });
 });

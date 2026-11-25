@@ -6,6 +6,8 @@ import { searchAnime } from '../../lib/anime';
 import { searchPeople } from '../../lib/people';
 import { fetchSpellSuggestion } from '../../lib/searchIndex';
 import { makeItem, makeRouter } from '../../test/utils';
+import { useAuthStore } from '../../store/authStore';
+import { useAdultStore } from '../../store/adultStore';
 
 jest.mock('next/router', () => ({ useRouter: jest.fn() }));
 jest.mock('../../hooks/useDetailsRoute', () => ({ useDetailsRoute: () => ({ open: jest.fn() }) }));
@@ -94,4 +96,50 @@ it('pessoas aparecem primeiro quando o nome bate com a busca', async () => {
   expect(person).toHaveAttribute('href', '/person/287');
   const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
   expect(headings.indexOf('Pessoas')).toBeLessThan(headings.indexOf('Filmes'));
+});
+
+describe('resultados +18', () => {
+  const user = { uid: 'u1', name: 'Ana', email: null, photo: null };
+  afterEach(() => {
+    useAuthStore.setState({ status: 'loading', user: null });
+    useAdultStore.setState({ uid: null, birthDate: undefined, failed: false, enabled: false });
+  });
+
+  it('sem login, a chave não liga e pede para entrar', async () => {
+    useAuthStore.setState({ status: 'signedOut', user: null });
+    (searchTmdb as jest.Mock).mockResolvedValue(page([]));
+    renderSearch('busca-sem-login');
+
+    const toggle = screen.getByRole('switch', { name: /resultados \+18/ });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText(/só para quem entra na conta/)).toBeInTheDocument();
+    expect(searchTmdb).not.toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), undefined, true);
+  });
+
+  it('menor de idade não consegue ligar', () => {
+    useAuthStore.setState({ status: 'signedIn', user });
+    useAdultStore.setState({ uid: 'u1', birthDate: '2015-01-01' });
+    (searchTmdb as jest.Mock).mockResolvedValue(page([]));
+    renderSearch('busca-menor');
+
+    const toggle = screen.getByRole('switch', { name: /resultados \+18/ });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText(/só para maiores de 18 anos/)).toBeInTheDocument();
+  });
+
+  it('maior de idade liga a chave e a busca passa a pedir +18', async () => {
+    useAuthStore.setState({ status: 'signedIn', user });
+    useAdultStore.setState({ uid: 'u1', birthDate: '1990-01-01', enabled: false });
+    (searchTmdb as jest.Mock).mockResolvedValue(page([]));
+    renderSearch('busca-adulta');
+
+    expect(searchTmdb).toHaveBeenCalledWith('multi', 'busca-adulta', 1, undefined, false);
+    fireEvent.click(screen.getByRole('switch', { name: /resultados \+18/ }));
+    expect(screen.getByRole('switch', { name: /resultados \+18/ })).toHaveAttribute('aria-checked', 'true');
+    expect(searchTmdb).toHaveBeenCalledWith('multi', 'busca-adulta', 1, undefined, true);
+    expect(searchAnime).toHaveBeenCalledWith('busca-adulta', 1, undefined, true);
+    expect(searchPeople).toHaveBeenCalledWith('busca-adulta', 1, true);
+  });
 });

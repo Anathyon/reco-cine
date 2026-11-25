@@ -34,9 +34,9 @@ const DETAILS_FIELDS = [
 ].join(',');
 
 /**
- * Listas e catálogos não mostram conteúdo adulto (a API já filtra; isto é uma
- * garantia extra). A busca, ao contrário, mostra tudo: quem procura um título
- * específico deve encontrá-lo.
+ * Listas, catálogos e a busca comum não mostram conteúdo adulto (a API já filtra;
+ * isto é uma garantia extra). Só a busca +18, liberada pela rota depois de
+ * confirmar login e idade, inclui esses títulos.
  */
 const ADULT_GENRES = new Set([12, 49]);
 
@@ -134,7 +134,7 @@ export async function seasonNow(page = 1): Promise<Page<MediaItem>> {
   return { items: pool.slice(start, start + PAGE_SIZE), page, hasMore: pool.length > start + PAGE_SIZE };
 }
 
-export async function searchAnime(q: string, page = 1): Promise<Page<MediaItem>> {
+export async function searchAnime(q: string, page = 1, { adult = false } = {}): Promise<Page<MediaItem>> {
   // A API oficial recusa buscas com menos de 3 letras.
   if (q.trim().length < 3) return { items: [], page, hasMore: false };
   const data = await mal('anime', {
@@ -142,10 +142,10 @@ export async function searchAnime(q: string, page = 1): Promise<Page<MediaItem>>
     offset: (page - 1) * PAGE_SIZE,
     limit: PAGE_SIZE,
     fields: LIST_FIELDS,
-    // Busca completa: inclui títulos +18, que a API esconde por padrão.
-    nsfw: 'true',
+    // Títulos +18 (que a API esconde por padrão) só para maiores de idade confirmados.
+    nsfw: adult ? 'true' : undefined,
   });
-  return { items: toItems(nodes(data), { includeAdult: true }), page, hasMore: Boolean(data?.paging?.next) };
+  return { items: toItems(nodes(data), { includeAdult: adult }), page, hasMore: Boolean(data?.paging?.next) };
 }
 
 const RANKING_FOR: Record<AnimeSort, RankingType> = { popular: 'bypopularity', top: 'all', recent: 'airing' };

@@ -100,12 +100,17 @@ describe('listas', () => {
     expect(calledUrl(fetch).params).toMatchObject({ q: 'frieren', offset: '24' });
   });
 
-  it('busca é completa: inclui títulos +18 (as listas, não)', async () => {
+  it('títulos +18 só aparecem na busca +18 (nunca nas listas)', async () => {
     const adult = { ...rawAnime, id: 9, title: 'Overflow', genres: [{ id: 12, name: 'Hentai' }] };
-    const fetch = mockFetch(list([rawAnime, adult]), list([rawAnime, adult]));
-    const search = await mal.searchAnime('overflow');
-    expect(calledUrl(fetch).params.nsfw).toBe('true');
-    expect(search.items.map((i) => i.id)).toEqual([52991, 9]);
+    const fetch = mockFetch(list([rawAnime, adult]), list([rawAnime, adult]), list([rawAnime, adult]));
+
+    const safe = await mal.searchAnime('overflow');
+    expect(calledUrl(fetch, 0).params.nsfw).toBeUndefined();
+    expect(safe.items.map((i) => i.id)).toEqual([52991]);
+
+    const full = await mal.searchAnime('overflow', 1, { adult: true });
+    expect(calledUrl(fetch, 1).params.nsfw).toBe('true');
+    expect(full.items.map((i) => i.id)).toEqual([52991, 9]);
 
     const top = await mal.topAnime();
     expect(top.items.map((i) => i.id)).toEqual([52991]);
