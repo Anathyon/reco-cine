@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { anilistLinks, clearAnilistCache, mergeProviders, toProviders } from '../anilistServer';
+import { anilistInfo, clearAnilistCache, mergeProviders, toProviders, youtubeId } from '../anilistServer';
 import { jsonResponse, mockFetch } from '../../test/utils';
 
 const link = (site: string, language: string | null, extra: Record<string, unknown> = {}) => ({
@@ -54,11 +54,11 @@ describe('toProviders', () => {
   });
 });
 
-describe('anilistLinks', () => {
+describe('anilistInfo', () => {
   it('consulta pelo ID do MyAnimeList e guarda em memória', async () => {
     const fetch = mockFetch(jsonResponse({ data: { Media: { externalLinks: [link('VIZ', 'English')] } } }));
-    expect(await anilistLinks(13, 'MANGA')).toHaveLength(1);
-    expect(await anilistLinks(13, 'MANGA')).toHaveLength(1);
+    expect((await anilistInfo(13, 'MANGA')).links).toHaveLength(1);
+    expect((await anilistInfo(13, 'MANGA')).links).toHaveLength(1);
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = fetch.mock.calls[0];
     expect(url).toBe('https://graphql.anilist.co');
@@ -67,16 +67,21 @@ describe('anilistLinks', () => {
 
   it('título que a AniList não tem: lista vazia', async () => {
     mockFetch(jsonResponse({ errors: [{ message: 'Not Found.' }], data: { Media: null } }, 404));
-    expect(await anilistLinks(1, 'ANIME')).toEqual([]);
+    expect(await anilistInfo(1, 'ANIME')).toEqual({ links: [], trailerKey: null });
   });
 
   it('falha ou demora da AniList não quebra nada e não fica guardada', async () => {
     const fetch = mockFetch(jsonResponse({}, 500));
     fetch.mockRejectedValueOnce(new Error('timeout'));
-    expect(await anilistLinks(2, 'MANGA')).toEqual([]);
+    expect((await anilistInfo(2, 'MANGA')).links).toEqual([]);
     fetch.mockResolvedValueOnce(jsonResponse({ data: { Media: { externalLinks: [link('VIZ', 'English')] } } }));
-    expect(await anilistLinks(2, 'MANGA')).toEqual([]); // a rejeição
-    expect(await anilistLinks(2, 'MANGA')).toHaveLength(1);
+    expect((await anilistInfo(2, 'MANGA')).links).toEqual([]); // a rejeição
+    expect((await anilistInfo(2, 'MANGA')).links).toHaveLength(1);
+  });
+
+  it('traz o trailer do anime (reserva quando a Jikan está fora do ar)', async () => {
+    mockFetch(jsonResponse({ data: { Media: { externalLinks: [], trailer: { id: 'LHtdKWJdif4\t', site: 'youtube' } } } }));
+    expect((await anilistInfo(16498, 'ANIME')).trailerKey).toBe('LHtdKWJdif4');
   });
 });
 
@@ -87,4 +92,15 @@ it('mergeProviders junta sem repetir o mesmo serviço', () => {
     { name: 'Netflix', logo: null, url: 'https://netflix.com/b' },
   ];
   expect(mergeProviders(jikan, anilist).map((p) => p.url)).toEqual(['https://crunchyroll.com/a', 'https://netflix.com/b']);
+});
+
+it.each([
+  [{ id: 'tR8YH0G67Rk', site: 'youtube' }, 'tR8YH0G67Rk'],
+  [{ id: ' LHtdKWJdif4\t', site: 'youtube' }, 'LHtdKWJdif4'],
+  [{ id: 'x2abcd', site: 'dailymotion' }, null],
+  [{ id: 'curto', site: 'youtube' }, null],
+  [{ id: '"><script>', site: 'youtube' }, null],
+  [null, null],
+])('youtubeId(%p) = %p', (trailer, expected) => {
+  expect(youtubeId(trailer)).toBe(expected);
 });

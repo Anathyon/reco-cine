@@ -8,7 +8,7 @@
 import type { CastMember, MediaDetails, MediaItem, Page, Provider } from '../types';
 import { formatDate, uniqueBy } from './format';
 import type { AnimeSort } from './anime';
-import { anilistLinks, mergeProviders } from './anilistServer';
+import { anilistInfo, mergeProviders } from './anilistServer';
 
 export const PAGE_SIZE = 24;
 
@@ -266,9 +266,13 @@ async function rawDetails(id: number) {
 }
 
 export async function animeDetails(id: number): Promise<MediaDetails> {
-  const [raw, extras, links] = await Promise.all([rawDetails(id), jikanExtras(id), anilistLinks(id, 'ANIME')]);
+  const [raw, extras, anilist] = await Promise.all([rawDetails(id), jikanExtras(id), anilistInfo(id, 'ANIME')]);
   // Jikan primeiro; a AniList completa (ou substitui, quando a Jikan está fora do ar).
-  return normalizeMalDetails(id, raw, { ...extras, providers: mergeProviders(extras.providers ?? [], links) });
+  return normalizeMalDetails(id, raw, {
+    ...extras,
+    trailerKey: extras.trailerKey || anilist.trailerKey,
+    providers: mergeProviders(extras.providers ?? [], anilist.links),
+  });
 }
 
 export async function animeRecommendations(id: number): Promise<MediaItem[]> {

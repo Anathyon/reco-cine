@@ -1,6 +1,6 @@
 /*
- * Links oficiais de onde ler (mangás) ou assistir (animes), pela API GraphQL
- * pública da AniList (gratuita, sem chave). SOMENTE no servidor.
+ * Links oficiais de onde ler (mangás) ou assistir (animes) e trailer dos animes,
+ * pela API GraphQL pública da AniList (gratuita, sem chave). SOMENTE no servidor.
  *
  * A AniList guarda o ID do MyAnimeList de cada título (idMal), então dá para
  * consultar direto com os IDs que o site já usa. Se a AniList falhar ou demorar,
@@ -13,6 +13,7 @@ const ENDPOINT = 'https://graphql.anilist.co';
 const QUERY = `query ($id: Int, $type: MediaType) {
   Media(idMal: $id, type: $type) {
     externalLinks { site url type language isDisabled }
+    trailer { id site }
   }
 }`;
 
@@ -69,18 +70,31 @@ export function toProviders(links: RawLink[]): Provider[] {
     }));
 }
 
+/** ID de vídeo do YouTube (a AniList às vezes manda com espaço ou tab no fim). */
+export function youtubeId(trailer: { id?: unknown; site?: unknown } | null | undefined): string | null {
+  if (!trailer || trailer.site !== 'youtube' || typeof trailer.id !== 'string') return null;
+  const id = trailer.id.trim();
+  return /^[\w-]{11}$/.test(id) ? id : null;
+}
+
+export interface AnilistInfo {
+  links: Provider[];
+  trailerKey: string | null;
+}
+
+const EMPTY: AnilistInfo = { links: [], trailerKey: null };
 const TTL_MS = 12 * 60 * 60 * 1000;
 const MEMORY_MAX = 2000;
-const memory = new Map<string, { at: number; links: Provider[] }>();
+const memory = new Map<string, { at: number; info: AnilistInfo }>();
 
 export function clearAnilistCache() {
   memory.clear();
 }
 
-export async function anilistLinks(idMal: number, type: 'ANIME' | 'MANGA', timeoutMs = 3500): Promise<Provider[]> {
+export async function anilistInfo(idMal: number, type: 'ANIME' | 'MANGA', timeoutMs = 3500): Promise<AnilistInfo> {
   const key = `${type}-${idMal}`;
   const hit = memory.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.links;
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.info;
 
   try {
     const res = await fetch(ENDPOINT, {
@@ -90,14 +104,14 @@ export async function anilistLinks(idMal: number, type: 'ANIME' | 'MANGA', timeo
       signal: AbortSignal.timeout(timeoutMs),
     });
     // 404 = a AniList não tem o título: guarda como "sem links". Outras falhas não ficam guardadas.
-    if (res.status !== 404 && !res.ok) return [];
-    const body = res.ok ? await res.json() : null;
-    const links = toProviders(body?.data?.Media?.externalLinks ?? []);
+    if (res.status !== 404 && !res.ok) return EMPTY;
+    const media = res.ok ? (await res.json())?.data?.Media : null;
+    const info: AnilistInfo = { links: toProviders(media?.externalLinks ?? []), trailerKey: youtubeId(media?.trailer) };
     if (memory.size >= MEMORY_MAX) memory.delete(memory.keys().next().value as string);
-    memory.set(key, { at: Date.now(), links });
-    return links;
+    memory.set(key, { at: Date.now(), info });
+    return info;
   } catch {
-    return [];
+    return EMPTY;
   }
 }
 

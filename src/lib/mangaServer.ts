@@ -4,7 +4,7 @@
  */
 import type { MediaDetails, MediaItem, Page, Provider } from '../types';
 import { formatDate, uniqueBy } from './format';
-import { anilistLinks } from './anilistServer';
+import { anilistInfo } from './anilistServer';
 import { PAGE_SIZE, SCAN_CHUNK, SCAN_MAX_CHUNKS, cleanSynopsis, genreName, isSafe, mal, nodes } from './malServer';
 
 export type MangaSort = 'popular' | 'top';
@@ -154,8 +154,8 @@ const rawDetails = (id: number) => mal(`manga/${id}`, { fields: DETAILS_FIELDS }
 
 /** Detalhes do MAL + onde ler oficialmente (AniList; vazio se ela falhar). */
 export async function mangaDetails(id: number): Promise<MediaDetails> {
-  const [raw, links] = await Promise.all([rawDetails(id), anilistLinks(id, 'MANGA')]);
-  return normalizeMangaDetails(id, raw, links);
+  const [raw, anilist] = await Promise.all([rawDetails(id), anilistInfo(id, 'MANGA')]);
+  return normalizeMangaDetails(id, raw, anilist.links);
 }
 
 export async function mangaRecommendations(id: number): Promise<MediaItem[]> {
