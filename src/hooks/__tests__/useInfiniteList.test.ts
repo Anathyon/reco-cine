@@ -94,9 +94,10 @@ it('mostra o erro e tenta a mesma página de novo', async () => {
 
 it('o primeiro desenho já é "carregando" (igual ao HTML do servidor, sem erro de hidratação)', () => {
   const fetchPage = jest.fn(() => new Promise<Page<MediaItem>>(() => undefined));
+  const k = key();
   const states: boolean[] = [];
   renderHook(() => {
-    const list = useInfiniteList(key(), fetchPage);
+    const list = useInfiniteList(k, fetchPage);
     states.push(list.loading);
     return list;
   });
