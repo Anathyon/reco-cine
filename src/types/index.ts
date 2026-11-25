@@ -1,6 +1,6 @@
-export type MediaType = 'movie' | 'tv' | 'anime';
+export type MediaType = 'movie' | 'tv' | 'anime' | 'manga';
 
-/** Formato único usado pela interface para filmes, séries e animes. */
+/** Formato único usado pela interface para filmes, séries, animes e mangás. */
 export interface MediaItem {
   id: number;
   type: MediaType;
@@ -53,4 +53,5 @@ export const TYPE_LABEL: Record<MediaType, string> = {
   movie: 'Filme',
   tv: 'Série',
   anime: 'Anime',
+  manga: 'Mangá',
 };

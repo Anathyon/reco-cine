@@ -6,8 +6,8 @@ import type { MediaItem, MediaType } from '../types';
  *  - backup em arquivo JSON, com os dados completos de cada item.
  */
 
-const TYPE_CODE: Record<MediaType, string> = { movie: 'm', tv: 't', anime: 'a' };
-const CODE_TYPE: Record<string, MediaType> = { m: 'movie', t: 'tv', a: 'anime' };
+const TYPE_CODE: Record<MediaType, string> = { movie: 'm', tv: 't', anime: 'a', manga: 'g' };
+const CODE_TYPE: Record<string, MediaType> = { m: 'movie', t: 'tv', a: 'anime', g: 'manga' };
 export const MAX_SHARED = 100;
 
 export type Ref = Pick<MediaItem, 'type' | 'id'>;
@@ -24,7 +24,7 @@ export function decodeRefs(raw: unknown): Ref[] {
   const seen = new Set<string>();
   const refs: Ref[] = [];
   for (const part of raw.split('.')) {
-    const match = part.match(/^([mta])(\d{1,9})$/);
+    const match = part.match(/^([mtag])(\d{1,9})$/);
     if (!match || seen.has(part)) continue;
     seen.add(part);
     refs.push({ type: CODE_TYPE[match[1]], id: Number(match[2]) });

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import SearchPage from '../../pages/search';
 import { searchTmdb, getTrending } from '../../lib/tmdb';
 import { searchAnime } from '../../lib/anime';
+import { searchManga } from '../../lib/manga';
 import { searchPeople } from '../../lib/people';
 import { fetchSpellSuggestion } from '../../lib/searchIndex';
 import { makeItem, makeRouter } from '../../test/utils';
@@ -13,6 +14,7 @@ jest.mock('next/router', () => ({ useRouter: jest.fn() }));
 jest.mock('../../hooks/useDetailsRoute', () => ({ useDetailsRoute: () => ({ open: jest.fn() }) }));
 jest.mock('../../lib/tmdb', () => ({ ...jest.requireActual('../../lib/tmdb'), searchTmdb: jest.fn(), getTrending: jest.fn() }));
 jest.mock('../../lib/anime', () => ({ searchAnime: jest.fn() }));
+jest.mock('../../lib/manga', () => ({ searchManga: jest.fn() }));
 jest.mock('../../lib/people', () => ({ ...jest.requireActual('../../lib/people'), searchPeople: jest.fn() }));
 jest.mock('../../lib/searchIndex', () => ({
   ...jest.requireActual('../../lib/searchIndex'),
@@ -43,6 +45,7 @@ beforeEach(() => {
   window.scrollTo = jest.fn();
   (getTrending as jest.Mock).mockResolvedValue(page([]));
   (searchAnime as jest.Mock).mockResolvedValue(page([]));
+  (searchManga as jest.Mock).mockResolvedValue(page([]));
   (searchPeople as jest.Mock).mockResolvedValue(page([]));
   (fetchSpellSuggestion as jest.Mock).mockResolvedValue(null);
 });
@@ -140,6 +143,7 @@ describe('resultados +18', () => {
     expect(screen.getByRole('switch', { name: /resultados \+18/ })).toHaveAttribute('aria-checked', 'true');
     expect(searchTmdb).toHaveBeenCalledWith('multi', 'busca-adulta', 1, undefined, true);
     expect(searchAnime).toHaveBeenCalledWith('busca-adulta', 1, undefined, true);
+    expect(searchManga).toHaveBeenCalledWith('busca-adulta', 1, undefined, true);
     expect(searchPeople).toHaveBeenCalledWith('busca-adulta', 1, true);
   });
 });

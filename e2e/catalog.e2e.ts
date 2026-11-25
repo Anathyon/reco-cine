@@ -50,3 +50,17 @@ test('erro na API mostra aviso e "Tentar novamente" recupera', async ({ page }) 
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
   await expect(page.getByRole('article')).toHaveCount(4);
 });
+
+test('mangás: catálogo sem filtro de ano e detalhes sem "Onde assistir"', async ({ page }) => {
+  await mockApis(page);
+  await page.goto('/mangas');
+  await expect(page.getByRole('article')).toHaveCount(2);
+  await expect(page.getByLabel('Ano de lançamento')).toHaveCount(0);
+  await expect(page.getByLabel('Ordenar por').locator('option')).toHaveCount(2);
+
+  await page.getByRole('link', { name: /Mangá Ômicron/ }).first().click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Volumes')).toBeVisible();
+  await expect(dialog.getByRole('heading', { name: 'Onde assistir' })).toHaveCount(0);
+  await expect(page).toHaveURL(/view=manga-401/);
+});

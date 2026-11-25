@@ -29,7 +29,7 @@ export function languageLabel(code: string | null | undefined): string | null {
   }
 }
 
-export async function getTranslation(type: 'movie' | 'tv' | 'anime' | 'person', id: number, to = userLanguage()): Promise<Translation> {
+export async function getTranslation(type: 'movie' | 'tv' | 'anime' | 'manga' | 'person', id: number, to = userLanguage()): Promise<Translation> {
   const res = await fetch(`/api/translate/${type}/${id}?to=${encodeURIComponent(to)}`);
   if (!res.ok) throw new ApiError('Não foi possível traduzir agora.');
   return res.json();

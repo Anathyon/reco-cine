@@ -21,7 +21,7 @@ service cloud.firestore {
       return d.keys().hasAll(['id', 'type', 'title', 'addedAt'])
         && d.keys().hasOnly(['id', 'type', 'title', 'poster', 'backdrop', 'year', 'rating', 'overview', 'addedAt'])
         && d.id is int && d.id > 0
-        && d.type in ['movie', 'tv', 'anime']
+        && d.type in ['movie', 'tv', 'anime', 'manga']
         && favId == d.type + '-' + string(d.id)
         && d.title is string && d.title.size() > 0 && d.title.size() <= 300
         && d.addedAt is number

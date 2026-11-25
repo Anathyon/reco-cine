@@ -80,6 +80,11 @@ export const PlayIcon = (p: IconProps) => (
     <path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5z" />
   </Svg>
 );
+export const BookIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M2 4.5h6a4 4 0 0 1 4 4V20a3 3 0 0 0-3-3H2zM22 4.5h-6a4 4 0 0 0-4 4V20a3 3 0 0 1 3-3h7z" />
+  </Svg>
+);
 export const ShuffleIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />

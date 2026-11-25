@@ -5,6 +5,7 @@ import { LazyMediaRow, MediaRow } from '../components/media/MediaRow';
 import { useQuery } from '../hooks/useQuery';
 import { getList, getTrending } from '../lib/tmdb';
 import { getSeasonNow, getTopAnime } from '../lib/anime';
+import { discoverManga } from '../lib/manga';
 import { useFavoritesStore } from '../store/favoritesStore';
 import type { MediaItem } from '../types';
 
@@ -94,6 +95,18 @@ export default function HomePage({ heroItems, todayItems }: Props) {
           href="/animes"
           queryKey="anime:top:popularity"
           fetcher={() => getTopAnime(1, 'bypopularity').then((p) => p.items)}
+        />
+        <LazyMediaRow
+          title="Mangás mais lidos"
+          href="/mangas"
+          queryKey="manga:popular"
+          fetcher={() => discoverManga({ sort: 'popular' }).then((p) => p.items)}
+        />
+        <LazyMediaRow
+          title="Mangás aclamados"
+          href="/mangas?sort=top"
+          queryKey="manga:top"
+          fetcher={() => discoverManga({ sort: 'top' }).then((p) => p.items)}
         />
       </div>
     </>

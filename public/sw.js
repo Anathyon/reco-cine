@@ -1,5 +1,5 @@
 /* Service worker do Reco Cine: cache de imagens e de respostas de API para uso offline. */
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const API_CACHE = `reco-cine-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `reco-cine-images-${CACHE_VERSION}`;
 const MAX_IMAGES = 400;
@@ -25,7 +25,8 @@ async function trimCache(name, max) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Respostas pessoais (ex.: busca +18) não ficam guardadas no aparelho.
+    if (response.ok && !/no-store|private/.test(response.headers.get('Cache-Control') || '')) {
       const cache = await caches.open(API_CACHE);
       cache.put(request, response.clone());
     }
@@ -55,7 +56,9 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
 
-  const API_PREFIXES = ['/api/tmdb/', '/api/anime/', '/api/search/', '/api/translate/'];
+  const API_PREFIXES = ['/api/tmdb/', '/api/anime/', '/api/manga/', '/api/search/', '/api/translate/'];
+  // Pedidos com login (busca +18) vão direto para a rede, sem passar pelo cache.
+  if (url.searchParams.get('adult') === '1') return;
   if (url.origin === self.location.origin && API_PREFIXES.some((p) => url.pathname.startsWith(p))) {
     event.respondWith(networkFirst(request));
   } else if (url.hostname === 'image.tmdb.org' || url.hostname === 'cdn.myanimelist.net') {

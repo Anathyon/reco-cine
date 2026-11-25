@@ -1,7 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
 /*
- * Respostas simuladas do TMDB (via /api/tmdb) e do MyAnimeList (via /api/anime).
+ * Respostas simuladas do TMDB (via /api/tmdb) e do MyAnimeList (via /api/anime e /api/manga).
  * Os dados são fictícios, mas seguem o formato real das APIs.
  */
 
@@ -46,6 +46,17 @@ export const ANIMES: Raw[] = [
   type: 'anime',
   overview: `Sinopse de ${a.originalTitle || a.title}.`,
   poster: `https://cdn.myanimelist.net/${a.id}l.jpg`,
+  backdrop: null,
+}));
+
+export const MANGAS: Raw[] = [
+  { id: 401, title: 'Mangá Ômicron', rating: 9.1, year: '1997' },
+  { id: 402, title: 'Mangá Rho', rating: 8.2, year: '2018' },
+].map((m) => ({
+  ...m,
+  type: 'manga',
+  overview: `Sinopse de ${m.title}.`,
+  poster: `https://cdn.myanimelist.net/${m.id}m.jpg`,
   backdrop: null,
 }));
 
@@ -190,6 +201,41 @@ function handleAnime(route: Route) {
   return json({ error: 'Anime não encontrado' }, 404);
 }
 
+function handleManga(route: Route) {
+  const url = new URL(route.request().url());
+  const path = url.pathname.replace(/^\/api\/manga\//, '');
+  const json = (body: unknown, status = 200) => route.fulfill({ status, json: body });
+
+  if (path === 'discover') return json({ items: MANGAS, page: 1, hasMore: false });
+  if (path === 'search') {
+    const q = (url.searchParams.get('q') || '').toLowerCase();
+    return json({ items: MANGAS.filter((m) => m.title.toLowerCase().includes(q)), page: 1, hasMore: false });
+  }
+  const match = path.match(/^(\d+)(?:\/(recommendations))?$/);
+  const manga = match && MANGAS.find((m) => m.id === Number(match[1]));
+  if (match && manga) {
+    if (match[2] === 'recommendations') return json(MANGAS.filter((m) => m.id !== manga.id));
+    return json({
+      ...manga,
+      originalTitle: null,
+      tagline: null,
+      genres: ['Ação'],
+      facts: [
+        { label: 'Formato', value: 'Mangá' },
+        { label: 'Volumes', value: '10' },
+        { label: 'Status', value: 'Finalizado' },
+      ],
+      cast: [],
+      trailerKey: null,
+      providers: [],
+      providersLink: null,
+      externalUrl: `https://myanimelist.net/manga/${manga.id}`,
+      externalLabel: 'Ver no MyAnimeList',
+    });
+  }
+  return json({ error: 'Mangá não encontrado' }, 404);
+}
+
 export async function mockApis(page: Page, options: MockOptions = {}) {
   const image = (route: Route) => route.fulfill({ contentType: 'image/png', body: PNG });
   await page.route('https://image.tmdb.org/**', image);
@@ -197,6 +243,7 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
   await page.route('https://www.youtube-nocookie.com/**', (route) => route.fulfill({ contentType: 'text/html', body: '<p>trailer</p>' }));
   await page.route('**/api/tmdb/**', (route) => handleTmdb(route, options));
   await page.route('**/api/anime/**', handleAnime);
+  await page.route('**/api/manga/**', handleManga);
   await page.route('**/api/search/catalog', (route) => route.fulfill({ json: SEARCH_INDEX }));
   await page.route('**/api/search/spell**', (route) => route.fulfill({ json: { suggestion: null } }));
   await page.route('**/api/translate/**', (route) => {

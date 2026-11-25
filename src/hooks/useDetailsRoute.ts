@@ -7,7 +7,7 @@ let openedWithPush = false;
 
 export function parseView(raw: unknown): { type: MediaType; id: number } | null {
   if (typeof raw !== 'string') return null;
-  const match = raw.match(/^(movie|tv|anime)-(\d+)$/);
+  const match = raw.match(/^(movie|tv|anime|manga)-(\d+)$/);
   return match ? { type: match[1] as MediaType, id: Number(match[2]) } : null;
 }
 

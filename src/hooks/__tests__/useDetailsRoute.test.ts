@@ -16,6 +16,7 @@ describe('parseView', () => {
     ['movie-550', { type: 'movie', id: 550 }],
     ['tv-1396', { type: 'tv', id: 1396 }],
     ['anime-52991', { type: 'anime', id: 52991 }],
+    ['manga-2', { type: 'manga', id: 2 }],
   ])('%s', (raw, expected) => {
     expect(parseView(raw)).toEqual(expected);
   });

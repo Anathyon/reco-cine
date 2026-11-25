@@ -21,6 +21,7 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'movie', label: 'Filmes' },
   { key: 'tv', label: 'Séries' },
   { key: 'anime', label: 'Animes' },
+  { key: 'manga', label: 'Mangás' },
 ];
 
 const SORTERS: Record<Sort, (a: FavoriteItem, b: FavoriteItem) => number> = {

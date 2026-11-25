@@ -11,7 +11,11 @@ export type AnimeSort = 'popular' | 'top' | 'recent';
 
 const TIMEOUT_MS = 20000;
 
-async function request<T>(
+const NOUN = { anime: 'animes', manga: 'mangás' } as const;
+
+/** Chamada às rotas /api/anime e /api/manga (mesmo formato de resposta e de erro). */
+export async function malRequest<T>(
+  base: 'anime' | 'manga',
   path: string,
   params: Record<string, string | number | undefined> = {},
   signal?: AbortSignal,
@@ -30,10 +34,10 @@ async function request<T>(
 
   let res: Response;
   try {
-    res = await fetch(`/api/anime/${path}${qs ? `?${qs}` : ''}`, headers ? { signal: controller.signal, headers } : { signal: controller.signal });
+    res = await fetch(`/api/${base}/${path}${qs ? `?${qs}` : ''}`, headers ? { signal: controller.signal, headers } : { signal: controller.signal });
   } catch (err) {
     if (signal?.aborted) throw err;
-    throw new ApiError('O serviço de animes (MyAnimeList) não respondeu. Tente novamente em instantes.');
+    throw new ApiError(`O serviço de ${NOUN[base]} (MyAnimeList) não respondeu. Tente novamente em instantes.`);
   } finally {
     clearTimeout(timer);
     signal?.removeEventListener('abort', onAbort);
@@ -41,10 +45,13 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new ApiError(body?.error || `Erro ${res.status} ao consultar animes`);
+    throw new ApiError(body?.error || `Erro ${res.status} ao consultar ${NOUN[base]}`);
   }
   return res.json();
 }
+
+const request = <T>(path: string, params?: Record<string, string | number | undefined>, signal?: AbortSignal, adult = false) =>
+  malRequest<T>('anime', path, params, signal, adult);
 
 /* ---------- listas ---------- */
 

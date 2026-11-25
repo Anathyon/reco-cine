@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { MediaDetails, MediaType } from '../../types';
 import { TYPE_LABEL } from '../../types';
 import { formatRating, ratingColor } from '../../lib/format';
-import { getAnimeCharacters, getDetails, getSimilar, titleHref } from '../../lib/media';
+import { getAnimeCharacters, getDetails, getSimilar, isMalType, titleHref } from '../../lib/media';
 import { useQuery } from '../../hooks/useQuery';
 import { toast } from '../../store/toastStore';
 import FavoriteButton from './FavoriteButton';
@@ -109,15 +109,15 @@ export default function DetailsView({ type, id, initialDetails, variant = 'modal
             <section>
               <h3 className="section-title">Sinopse</h3>
               {d.tagline && <p className="mb-2 italic text-zinc-400">“{d.tagline}”</p>}
-              {d.type !== 'anime' && d.overview ? (
+              {!isMalType(d.type) && d.overview ? (
                 <p className="leading-relaxed text-zinc-300">{d.overview}</p>
               ) : (
-                // Animes vêm em inglês do MyAnimeList; filmes/séries sem sinopse em português usam outro idioma.
+                // Animes e mangás vêm em inglês do MyAnimeList; filmes/séries sem sinopse em português usam outro idioma.
                 <TranslatedText
                   type={d.type}
                   id={d.id}
-                  text={d.type === 'anime' ? d.overview : ''}
-                  textLanguage={d.type === 'anime' ? 'en' : undefined}
+                  text={isMalType(d.type) ? d.overview : ''}
+                  textLanguage={isMalType(d.type) ? 'en' : undefined}
                   emptyText="Sinopse ainda não disponível."
                 />
               )}
@@ -159,46 +159,48 @@ export default function DetailsView({ type, id, initialDetails, variant = 'modal
           </div>
 
           <aside className="space-y-8">
-            <section>
-              <h3 className="section-title">Onde assistir</h3>
-              {d.providers.length > 0 ? (
-                <>
-                  <ul className="flex flex-wrap gap-2">
-                    {d.providers.map((p) => {
-                      const content = (
-                        <>
-                          {p.logo && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.logo} alt="" className="h-7 w-7 rounded-md" loading="lazy" />
-                          )}
-                          <span className="text-xs font-medium text-zinc-200">{p.name}</span>
-                        </>
-                      );
-                      const href = p.url || d.providersLink;
-                      return (
-                        <li key={p.name}>
-                          {href ? (
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10 transition hover:bg-white/10"
-                            >
-                              {content}
-                            </a>
-                          ) : (
-                            <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10">{content}</div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  {d.type !== 'anime' && <p className="mt-2 text-[11px] text-zinc-500">Disponibilidade no Brasil · dados JustWatch</p>}
-                </>
-              ) : (
-                <p className="text-sm text-zinc-500">Sem informação de streaming no Brasil.</p>
-              )}
-            </section>
+            {d.type !== 'manga' && (
+              <section>
+                <h3 className="section-title">Onde assistir</h3>
+                {d.providers.length > 0 ? (
+                  <>
+                    <ul className="flex flex-wrap gap-2">
+                      {d.providers.map((p) => {
+                        const content = (
+                          <>
+                            {p.logo && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={p.logo} alt="" className="h-7 w-7 rounded-md" loading="lazy" />
+                            )}
+                            <span className="text-xs font-medium text-zinc-200">{p.name}</span>
+                          </>
+                        );
+                        const href = p.url || d.providersLink;
+                        return (
+                          <li key={p.name}>
+                            {href ? (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10 transition hover:bg-white/10"
+                              >
+                                {content}
+                              </a>
+                            ) : (
+                              <div className="flex items-center gap-2 rounded-xl bg-white/5 py-1.5 pl-1.5 pr-3 ring-1 ring-white/10">{content}</div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {d.type !== 'anime' && <p className="mt-2 text-[11px] text-zinc-500">Disponibilidade no Brasil · dados JustWatch</p>}
+                  </>
+                ) : (
+                  <p className="text-sm text-zinc-500">Sem informação de streaming no Brasil.</p>
+                )}
+              </section>
+            )}
 
             {d.facts.length > 0 && (
               <section>

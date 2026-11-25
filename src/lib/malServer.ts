@@ -38,7 +38,8 @@ const DETAILS_FIELDS = [
  * isto é uma garantia extra). Só a busca +18, liberada pela rota depois de
  * confirmar login e idade, inclui esses títulos.
  */
-const ADULT_GENRES = new Set([12, 49]);
+/** Hentai (12) e Erotica (49): mesmos IDs para animes e mangás. */
+export const ADULT_GENRES = new Set([12, 49]);
 
 export class MalError extends Error {
   constructor(
@@ -94,8 +95,8 @@ export function toItem(a: any): MediaItem {
   };
 }
 
-const isSafe = (a: any) => !(a.genres || []).some((g: any) => ADULT_GENRES.has(g.id));
-const nodes = (data: any): any[] => (data?.data || []).map((d: any) => d.node).filter(Boolean);
+export const isSafe = (a: any) => !(a.genres || []).some((g: any) => ADULT_GENRES.has(g.id));
+export const nodes = (data: any): any[] => (data?.data || []).map((d: any) => d.node).filter(Boolean);
 const toItems = (raw: any[], { includeAdult = false } = {}) =>
   uniqueBy((includeAdult ? raw : raw.filter(isSafe)).map(toItem), (i: MediaItem) => i.id);
 
@@ -151,8 +152,8 @@ export async function searchAnime(q: string, page = 1, { adult = false } = {}): 
 const RANKING_FOR: Record<AnimeSort, RankingType> = { popular: 'bypopularity', top: 'all', recent: 'airing' };
 
 /** Bloco lido de cada vez quando é preciso filtrar por gênero (a API não filtra). */
-const SCAN_CHUNK = 500;
-const SCAN_MAX_CHUNKS = 20;
+export const SCAN_CHUNK = 500;
+export const SCAN_MAX_CHUNKS = 20;
 
 export async function discoverAnime(opts: { genre?: number; sort?: AnimeSort; page?: number; year?: number }): Promise<Page<MediaItem>> {
   const sort = opts.sort || 'popular';
@@ -216,7 +217,8 @@ const GENRES_PT: Record<string, string> = {
   Space: 'Espaço', 'Strategy Game': 'Jogo de estratégia', 'Super Power': 'Superpoderes', Survival: 'Sobrevivência',
   'Team Sports': 'Esportes coletivos', 'Time Travel': 'Viagem no tempo', 'Urban Fantasy': 'Fantasia urbana',
   Vampire: 'Vampiros', 'Video Game': 'Videogame', Villainess: 'Vilã', 'Visual Arts': 'Artes visuais',
-  Workplace: 'Ambiente de trabalho', Kids: 'Infantil',
+  Workplace: 'Ambiente de trabalho', Kids: 'Infantil', Iyashikei: 'Iyashikei', Gore: 'Gore', 'Boys Love': 'Boys love',
+  'Girls Love': 'Girls love', Hentai: 'Hentai', Crossdressing: 'Crossdressing', Memoir: 'Memórias',
 };
 
 export const genreName = (name: string) => GENRES_PT[name] ?? name;

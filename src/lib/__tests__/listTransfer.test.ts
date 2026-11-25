@@ -24,6 +24,7 @@ describe('link de compartilhamento', () => {
       { type: 'tv', id: 7 },
     ]);
     expect(decodeRefs(undefined)).toEqual([]);
+    expect(decodeRefs('g2')).toEqual([{ type: 'manga', id: 2 }]);
     expect(decodeRefs(['m1'])).toEqual([]);
   });
 

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { isLanguage, sourceText, translateText, type TranslatableType } from '../../../../lib/translateServer';
 
-const TYPES = new Set<TranslatableType>(['movie', 'tv', 'anime', 'person']);
+const TYPES = new Set<TranslatableType>(['movie', 'tv', 'anime', 'manga', 'person']);
 
 /**
  * Sinopse (ou biografia) traduzida para o idioma pedido.

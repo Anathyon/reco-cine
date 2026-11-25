@@ -14,7 +14,7 @@ import type { FirebaseServices } from './firebase';
 
 type Items = Record<string, FavoriteItem>;
 
-const TYPES = new Set<MediaType>(['movie', 'tv', 'anime']);
+const TYPES = new Set<MediaType>(['movie', 'tv', 'anime', 'manga']);
 /** Limite de operações por lote do Firestore. */
 const BATCH_LIMIT = 450;
 

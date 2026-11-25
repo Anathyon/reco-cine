@@ -18,6 +18,7 @@ const CATALOG: Record<MediaType, { href: string; label: string }> = {
   movie: { href: '/movies', label: 'Filmes' },
   tv: { href: '/series', label: 'Séries' },
   anime: { href: '/animes', label: 'Animes' },
+  manga: { href: '/mangas', label: 'Mangás' },
 };
 
 // Nenhuma página é gerada no build: cada título é gerado na primeira visita e fica em cache.
@@ -47,7 +48,9 @@ export default function TitlePage({ type, id, details, siteUrl }: Props) {
     ? details.overview.length > 160
       ? `${details.overview.slice(0, 157).trimEnd()}…`
       : details.overview
-    : `Veja detalhes, trailer e onde assistir no Reco Cine.`;
+    : type === 'manga'
+      ? 'Veja detalhes e recomendações no Reco Cine.'
+      : 'Veja detalhes, trailer e onde assistir no Reco Cine.';
   // Imagem leve para a prévia (WhatsApp/Telegram ignoram imagens muito pesadas).
   const image = (details?.backdrop || details?.poster)?.replace('/original/', '/w780/');
 
@@ -57,7 +60,7 @@ export default function TitlePage({ type, id, details, siteUrl }: Props) {
         <title>{`${name} — Reco Cine`}</title>
         <meta name="description" content={description} />
         <link rel="canonical" href={url} />
-        <meta property="og:type" content={type === 'movie' ? 'video.movie' : 'video.tv_show'} key="og:type" />
+        <meta property="og:type" content={type === 'movie' ? 'video.movie' : type === 'manga' ? 'book' : 'video.tv_show'} key="og:type" />
         <meta property="og:url" content={url} />
         <meta property="og:title" content={name} key="og:title" />
         <meta property="og:description" content={description} key="og:description" />

@@ -3,7 +3,7 @@ import { useQuery } from '../../hooks/useQuery';
 import { getTranslation, languageLabel, userLanguage } from '../../lib/translate';
 
 interface Props {
-  type: 'movie' | 'tv' | 'anime' | 'person';
+  type: 'movie' | 'tv' | 'anime' | 'manga' | 'person';
   id: number;
   /** Texto já disponível (ex.: sinopse do MAL em inglês). Vazio = buscar o original no servidor. */
   text: string;

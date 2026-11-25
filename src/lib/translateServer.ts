@@ -88,15 +88,15 @@ export async function translateText(text: string, to: string): Promise<Translati
   return result;
 }
 
-export type TranslatableType = 'movie' | 'tv' | 'anime' | 'person';
+export type TranslatableType = 'movie' | 'tv' | 'anime' | 'manga' | 'person';
 
 /**
  * Busca o texto original no servidor (o navegador nunca manda texto livre,
  * então a rota não vira um tradutor aberto) e traduz.
  */
 export async function sourceText(type: TranslatableType, id: number): Promise<string> {
-  if (type === 'anime') {
-    const raw = await mal(`anime/${id}`, { fields: 'synopsis' });
+  if (type === 'anime' || type === 'manga') {
+    const raw = await mal(`${type}/${id}`, { fields: 'synopsis' });
     return cleanSynopsis(raw.synopsis);
   }
   // TMDB: quando falta em português, usa o inglês ou qualquer outro idioma disponível.

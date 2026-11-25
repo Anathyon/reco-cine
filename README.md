@@ -1,18 +1,19 @@
 # 🎬 Reco Cine
 
-Descubra filmes, séries e animes, assista aos trailers, veja **onde assistir no Brasil** e monte a sua lista — tudo numa interface rápida, responsiva e instalável (PWA).
+Descubra filmes, séries, animes e mangás, assista aos trailers, veja **onde assistir no Brasil** e monte a sua lista — tudo numa interface rápida, responsiva e instalável (PWA).
 
 ---
 
 ## 📌 Funcionalidades
 
-- **Início com destaques**: banner rotativo da semana e fileiras de tendências, populares, nos cinemas, aclamados e animes da temporada (carregadas sob demanda ao rolar).
+- **Início com destaques**: banner rotativo da semana e fileiras de tendências, populares, nos cinemas, aclamados, animes da temporada e mangás mais lidos (carregadas sob demanda ao rolar).
 - **Catálogos de Filmes, Séries e Animes** com filtros por gênero, ano e **serviço de streaming no Brasil** (Netflix, Prime Video...), ordenação, rolagem infinita e botão **“Surpreenda-me”**. Os filtros ficam na URL.
 - **Detalhes completos** em um único modal: trailer embutido, sinopse, elenco, ficha técnica, plataformas de streaming no Brasil (JustWatch via TMDB) e recomendações relacionadas.
 - **Página própria para cada título** (`/title/movie/550`), gerada no servidor, com prévia (Open Graph) ao compartilhar no WhatsApp, Telegram e redes sociais.
 - **Modal na URL** (`?view=movie-550`): o botão “voltar” do celular fecha o modal. Ctrl/Cmd+clique num card abre a página do título em outra aba.
 - **Animes com personagens e dubladores** (MyAnimeList).
-- **Busca ao vivo e tolerante a erros** em filmes, séries, animes e pessoas ao mesmo tempo:
+- **Mangás** (também manhwas, manhuas e light novels) do MyAnimeList: catálogo por gênero e demografia (shounen, seinen, shoujo), mais populares e mais bem avaliados, detalhes com volumes, capítulos, autoria e revista, e recomendações de mangás parecidos.
+- **Busca ao vivo e tolerante a erros** em filmes, séries, animes, mangás e pessoas ao mesmo tempo:
   - **“Você quis dizer…”**: erros de digitação são corrigidos (“the wolking ded” → *The Walking Dead*, “leonardo dicapro” → *Leonardo DiCaprio*). Se a busca não acha nada, os resultados da grafia corrigida aparecem sozinhos, como no Google.
   - **Busca por atores e diretores**, com página própria (`/person/6193`) mostrando a filmografia. O elenco de cada título também leva a essa página.
   - Quando nada é encontrado, mostra **títulos parecidos** com o que foi digitado.
@@ -55,7 +56,7 @@ e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
 ## 📊 APIs
 
 - **[TMDB](https://developer.themoviedb.org/)** — filmes e séries (em pt-BR). As chamadas passam pela rota `/api/tmdb/*`, então **a chave fica só no servidor** e as respostas são cacheadas na CDN.
-- **[MyAnimeList](https://myanimelist.net/apiconfig/references/api/v2)** (API oficial v2) — animes. As chamadas passam pela rota `/api/anime/*`, então **o Client ID fica só no servidor**. A API oficial não filtra por gênero (o filtro é feito no servidor) e não tem personagens nem trailers.
+- **[MyAnimeList](https://myanimelist.net/apiconfig/references/api/v2)** (API oficial v2) — animes e mangás. As chamadas passam pelas rotas `/api/anime/*` e `/api/manga/*`, então **o Client ID fica só no servidor**. A API oficial não filtra por gênero (o filtro é feito no servidor) e não tem personagens nem trailers.
 - **[Jikan](https://jikan.moe/)** — complemento opcional: personagens, dubladores, trailers e onde assistir. Se estiver fora do ar, essas seções só ficam vazias.
 
 - **Busca tolerante a erros**: a rota `/api/search/catalog` monta (uma vez por dia, em cache na CDN) um índice com ~4 mil títulos e pessoas populares do TMDB e do MyAnimeList. O navegador baixa esse índice e compara o que foi digitado palavra por palavra (distância de Damerau-Levenshtein, sem acentos), em ~10 ms. Para o que não está no índice, `/api/search/spell` usa as sugestões de busca do Google.

@@ -17,7 +17,10 @@ interface Props {
   title: string;
   description: string;
   genres: Genre[];
-  sortLabels: Record<CatalogSort, string>;
+  /** Ordenações oferecidas (padrão: todas com rótulo em `sortLabels`). */
+  sortLabels: Partial<Record<CatalogSort, string>>;
+  /** Mostra o filtro de ano (a API de mangás não filtra por ano). */
+  yearFilter?: boolean;
   fetchPage: (opts: CatalogFilters & { page: number }) => Promise<Page<MediaItem>>;
   /** Mostra o filtro "Onde assistir" com os serviços do TMDB para este tipo. */
   providerType?: TmdbType;
@@ -36,15 +39,16 @@ const YEARS = Array.from({ length: CURRENT_YEAR - 1950 + 2 }, (_, i) => CURRENT_
 const SELECT_CLASS =
   'h-11 cursor-pointer rounded-full border border-white/10 bg-ink-850 px-4 pr-9 text-sm font-medium text-white transition hover:border-white/25';
 
-export default function CatalogView({ type, title, description, genres, sortLabels, fetchPage, providerType }: Props) {
+export default function CatalogView({ type, title, description, genres, sortLabels, fetchPage, providerType, yearFilter = true }: Props) {
   const router = useRouter();
   const { open } = useDetailsRoute();
   const [surprising, setSurprising] = useState(false);
 
   // Filtros ficam na URL: dá para compartilhar e o "voltar" mantém a seleção.
   const genre = Number(router.query.genre) || undefined;
-  const sort: CatalogSort = SORTS.includes(router.query.sort as CatalogSort) ? (router.query.sort as CatalogSort) : 'popular';
-  const year = YEARS.includes(Number(router.query.year)) ? Number(router.query.year) : undefined;
+  const sorts = SORTS.filter((s) => sortLabels[s]);
+  const sort: CatalogSort = sorts.includes(router.query.sort as CatalogSort) ? (router.query.sort as CatalogSort) : 'popular';
+  const year = yearFilter && YEARS.includes(Number(router.query.year)) ? Number(router.query.year) : undefined;
   const provider = providerType ? Number(router.query.provider) || undefined : undefined;
   const filters: CatalogFilters = { genre, sort, year, provider };
 
@@ -108,25 +112,27 @@ export default function CatalogView({ type, title, description, genres, sortLabe
               onChange={(e) => setFilter({ sort: e.target.value as CatalogSort })}
               className={SELECT_CLASS}
             >
-              {SORTS.map((s) => (
+              {sorts.map((s) => (
                 <option key={s} value={s}>
                   {sortLabels[s]}
                 </option>
               ))}
             </select>
-            <select
-              aria-label="Ano de lançamento"
-              value={year ?? ''}
-              onChange={(e) => setFilter({ year: Number(e.target.value) || null })}
-              className={SELECT_CLASS}
-            >
-              <option value="">Qualquer ano</option>
-              {YEARS.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            {yearFilter && (
+              <select
+                aria-label="Ano de lançamento"
+                value={year ?? ''}
+                onChange={(e) => setFilter({ year: Number(e.target.value) || null })}
+                className={SELECT_CLASS}
+              >
+                <option value="">Qualquer ano</option>
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            )}
             {providerType && (
               <select
                 aria-label="Onde assistir"

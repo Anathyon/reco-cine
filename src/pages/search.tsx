@@ -12,18 +12,21 @@ import { useInfiniteList } from '../hooks/useInfiniteList';
 import { useQuery } from '../hooks/useQuery';
 import { getTrending, searchTmdb } from '../lib/tmdb';
 import { searchAnime } from '../lib/anime';
+import { searchManga } from '../lib/manga';
 import { searchPeople, type PersonSummary } from '../lib/people';
 import { didYouMean, normalize, type FuzzyIndex, type FuzzyMatch } from '../lib/fuzzy';
 import { entryToItem, fetchSpellSuggestion, loadSearchIndex } from '../lib/searchIndex';
 import { useAdultAccess } from '../store/adultStore';
 import type { MediaItem } from '../types';
 
-type Tab = 'all' | 'movie' | 'tv' | 'anime' | 'person';
+type Tab = 'all' | 'movie' | 'tv' | 'anime' | 'manga' | 'person';
+type TitleTab = 'movie' | 'tv' | 'anime' | 'manga';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'all', label: 'Tudo' },
   { key: 'movie', label: 'Filmes' },
   { key: 'tv', label: 'Séries' },
   { key: 'anime', label: 'Animes' },
+  { key: 'manga', label: 'Mangás' },
   { key: 'person', label: 'Pessoas' },
 ];
 
@@ -105,7 +108,7 @@ export default function SearchPage() {
             type="search"
             value={input}
             onChange={(e) => updateInput(e.target.value)}
-            placeholder="Filmes, séries, animes ou atores…"
+            placeholder="Filmes, séries, animes, mangás ou atores…"
             aria-label="Buscar títulos"
             autoFocus
             autoComplete="off"
@@ -257,14 +260,16 @@ function useReportEmpty(isEmpty: boolean, onEmpty: () => void) {
   }, [isEmpty]);
 }
 
-function fetchTab(tab: 'movie' | 'tv' | 'anime', term: string, page: number, adult: boolean) {
-  return tab === 'anime' ? searchAnime(term, page, undefined, adult) : searchTmdb(tab, term, page, undefined, adult);
+function fetchTab(tab: TitleTab, term: string, page: number, adult: boolean) {
+  if (tab === 'anime') return searchAnime(term, page, undefined, adult);
+  if (tab === 'manga') return searchManga(term, page, undefined, adult);
+  return searchTmdb(tab, term, page, undefined, adult);
 }
 
 /** Separa no cache as buscas com e sem +18. */
 const mode = (adult: boolean) => (adult ? ':adult' : '');
 
-function TabResults({ term, tab, adult, onEmpty, fallback }: ResultsForProps & { tab: 'movie' | 'tv' | 'anime' }) {
+function TabResults({ term, tab, adult, onEmpty, fallback }: ResultsForProps & { tab: TitleTab }) {
   const list = useInfiniteList(`search:${tab}:${term.toLowerCase()}${mode(adult)}`, (page) => fetchTab(tab, term, page, adult));
   const isEmpty = !list.loading && !list.error && list.items.length === 0 && !list.hasMore;
   useReportEmpty(isEmpty, onEmpty);
@@ -324,6 +329,7 @@ function AllResults({ term, adult, onSeeAll, onEmpty, fallback }: ResultsForProp
   const key = term.toLowerCase();
   const tmdb = useQuery(`search:multi:${key}${mode(adult)}`, () => searchTmdb('multi', term, 1, undefined, adult));
   const anime = useQuery(`search:anime-preview:${key}${mode(adult)}`, () => searchAnime(term, 1, undefined, adult));
+  const manga = useQuery(`search:manga-preview:${key}${mode(adult)}`, () => searchManga(term, 1, undefined, adult));
   const people = useQuery(`search:person:${key}:1${mode(adult)}`, () => searchPeople(term, 1, adult));
 
   const peopleItems = people.data?.items.filter((p) => p.photo || p.knownFor) ?? [];
@@ -334,17 +340,19 @@ function AllResults({ term, adult, onSeeAll, onEmpty, fallback }: ResultsForProp
     { tab: 'movie' as const, title: 'Filmes', q: tmdb, items: tmdb.data?.items.filter((i) => i.type === 'movie') },
     { tab: 'tv' as const, title: 'Séries', q: tmdb, items: tmdb.data?.items.filter((i) => i.type === 'tv') },
     { tab: 'anime' as const, title: 'Animes', q: anime, items: anime.data?.items },
+    { tab: 'manga' as const, title: 'Mangás', q: manga, items: manga.data?.items },
   ];
   // O TMDB ordena por relevância: a seção do resultado mais relevante vem primeiro
   // ("the walking dead" mostra Séries antes de Filmes).
   const topType = tmdb.data?.items[0]?.type;
   if (topType === 'tv') titleSections.unshift(...titleSections.splice(1, 1));
 
-  const loading = tmdb.loading || anime.loading || people.loading;
+  const loading = tmdb.loading || anime.loading || manga.loading || people.loading;
   const isEmpty =
     !loading &&
     !tmdb.error &&
     !anime.error &&
+    !manga.error &&
     titleSections.every((s) => !s.items?.length) &&
     !(people.data?.items.length ?? 0);
   useReportEmpty(isEmpty, onEmpty);

@@ -46,7 +46,7 @@ export default function Header({ transparent }: { transparent?: boolean }) {
                   <Link
                     href={href}
                     aria-current={active ? 'page' : undefined}
-                    className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition ${
+                    className={`relative rounded-full px-2.5 py-2 text-sm font-medium transition lg:px-3.5 ${
                       active ? 'text-white' : 'text-zinc-400 hover:text-white'
                     }`}
                   >

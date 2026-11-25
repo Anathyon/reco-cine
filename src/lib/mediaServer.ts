@@ -1,6 +1,7 @@
 /* Somente servidor (getStaticProps). */
 import type { MediaDetails, MediaType } from '../types';
 import { animeDetails } from './malServer';
+import { mangaDetails } from './mangaServer';
 import { getTmdbDetailsServer } from './tmdbServer';
 
 export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -16,7 +17,8 @@ export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
  */
 export async function getDetailsServer(type: MediaType, id: number): Promise<MediaDetails | null> {
   try {
-    return await withTimeout(type === 'anime' ? animeDetails(id) : getTmdbDetailsServer(type, id), 8000);
+    const load = type === 'anime' ? animeDetails(id) : type === 'manga' ? mangaDetails(id) : getTmdbDetailsServer(type, id);
+    return await withTimeout(load, 8000);
   } catch (err) {
     const status = (err as { status?: number }).status;
     const message = err instanceof Error ? err.message : '';
