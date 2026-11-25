@@ -37,7 +37,7 @@
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 2xl:max-w-[96rem];
   }
 
   .btn {
@@ -107,6 +107,27 @@
     .row-inset {
       padding-inline: max(2rem, calc((100% - 80rem) / 2 + 2rem));
       scroll-padding-inline: max(2rem, calc((100% - 80rem) / 2 + 2rem));
+    }
+  }
+  @media (min-width: 1536px) {
+    .row-inset {
+      padding-inline: max(2rem, calc((100% - 96rem) / 2 + 2rem));
+      scroll-padding-inline: max(2rem, calc((100% - 96rem) / 2 + 2rem));
+    }
+  }
+  /*
+   * Em telas grandes, a fileira de cards fica dentro da largura da página (margens
+   * iguais dos dois lados) em vez de vazar até a borda direita da tela.
+   */
+  @media (min-width: 1024px) {
+    .row-frame {
+      max-width: 80rem;
+      margin-inline: auto;
+    }
+  }
+  @media (min-width: 1536px) {
+    .row-frame {
+      max-width: 96rem;
     }
   }
   .text-balance {

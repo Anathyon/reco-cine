@@ -57,7 +57,7 @@ export function MediaRow({ title, href, items, loading, error, onRetry, showType
           <ErrorState message={error} onRetry={onRetry} compact />
         </div>
       ) : (
-        <div className="relative">
+        <div className="row-frame relative">
           <div
             ref={scroller}
             onScroll={updateEdges}
