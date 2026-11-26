@@ -1,24 +1,5 @@
 {
   "firestore": {
     "rules": "firestore.rules"
-  },
-  "hosting": {
-    "source": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "coverage/**",
-      "e2e/**",
-      "test-results/**",
-      "playwright-report/**"
-    ],
-    "frameworksBackend": {
-      "region": "southamerica-east1",
-      "memory": "512MiB",
-      "maxInstances": 10,
-      "concurrency": 80,
-      "timeoutSeconds": 60
-    }
   }
 }

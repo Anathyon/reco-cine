@@ -12,7 +12,7 @@ const compat = new FlatCompat({
 const eslintConfig = [
   // Ignorados globais: precisam ficar num objeto só com `ignores`.
   {
-    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "coverage/**", ".firebase/**", "next-env.d.ts", "public/sw.js"],
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts", "public/sw.js"],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
