@@ -14,7 +14,11 @@
       "playwright-report/**"
     ],
     "frameworksBackend": {
-      "region": "southamerica-east1"
+      "region": "southamerica-east1",
+      "memory": "512MiB",
+      "maxInstances": 10,
+      "concurrency": 80,
+      "timeoutSeconds": 60
     }
   }
 }

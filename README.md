@@ -95,6 +95,27 @@ Variáveis de ambiente (veja `.env.example`):
 
 ---
 
+## 🔥 Deploy no Firebase Hosting
+
+O site também pode ser publicado no Firebase. As rotas `/api` e as páginas com revalidação rodam numa Cloud Function em `southamerica-east1` (São Paulo), configurada em `firebase.json`. Os arquivos estáticos saem da CDN do Hosting.
+
+**Uma vez só:**
+
+1. No [console do Firebase](https://console.firebase.google.com/project/reco-cine/usage/details), mude o projeto para o plano **Blaze** (pago conforme o uso, com cota gratuita). As Cloud Functions exigem esse plano.
+2. Instale o CLI e entre na conta: `npm i -g firebase-tools` e `firebase login`.
+3. Ative o suporte a frameworks: `firebase experiments:enable webframeworks`.
+
+**A cada deploy:**
+
+```bash
+firebase deploy              # site + regras do Firestore
+firebase deploy --only hosting   # só o site
+```
+
+O CLI faz o `next build` e envia o `.env.local` junto com o servidor. Por isso as mesmas variáveis da tabela acima precisam estar nesse arquivo na máquina de onde sai o deploy. A URL pública (`reco-cine.web.app`) é detectada automaticamente. Ela e `reco-cine.firebaseapp.com` já vêm autorizadas no login com Google. Se usar um domínio próprio, adicione-o em *Authentication → Configurações → Domínios autorizados*.
+
+---
+
 ## 🛠️ Desenvolvimento local
 
 ```bash
