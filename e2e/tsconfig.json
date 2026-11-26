@@ -3,5 +3,7 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["./**/*.ts", "../playwright.config.ts"]
+  "include": ["./**/*.ts", "../playwright.config.ts"],
+  // O tsconfig da raiz exclui e2e/ e playwright.config.ts; sem isto, nada sobra aqui.
+  "exclude": ["../node_modules"]
 }

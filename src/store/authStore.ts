@@ -44,12 +44,20 @@ export const useAuthStore = create<AuthState>(() => ({
     try {
       await signInWithPopup(auth, provider);
     } catch (err) {
-      const code = errorCode(err);
+      let code = errorCode(err);
       if (CANCELLED.has(code)) return;
       // Navegadores que bloqueiam popups (alguns celulares/apps): faz o login na própria aba.
       if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
-        await signInWithRedirect(auth, provider);
-        return;
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectErr) {
+          code = errorCode(redirectErr);
+        }
+      }
+      if (code === 'auth/unauthorized-domain') {
+        // Falta este domínio em Authentication → Configurações → Domínios autorizados.
+        console.error(`[auth] Domínio não autorizado no Firebase: ${window.location.hostname}`);
       }
       toast(code === 'auth/network-request-failed' ? 'Sem conexão. Tente entrar de novo.' : 'Não foi possível entrar. Tente de novo.');
     }
