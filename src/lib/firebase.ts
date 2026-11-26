@@ -24,6 +24,21 @@ export const firebaseConfig = {
 export const isFirebaseConfigured = () =>
   Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId);
 
+type Place = Pick<Location, 'hostname' | 'host' | 'protocol'>;
+
+/**
+ * Em produção o login passa pelo próprio domínio do site: o next.config.ts
+ * repassa /__/auth/* para <projeto>.firebaseapp.com. Assim a sessão não depende
+ * de cookies de terceiros, que vários navegadores bloqueiam. Em localhost
+ * (desenvolvimento) usa o domínio do Firebase, que funciona sem configuração extra.
+ */
+export function authDomain(place: Place | undefined = typeof window === 'undefined' ? undefined : window.location): string | undefined {
+  if (!place) return firebaseConfig.authDomain;
+  const { hostname, host, protocol } = place;
+  const local = hostname === 'localhost' || hostname === '127.0.0.1' || protocol !== 'https:';
+  return local ? firebaseConfig.authDomain : host;
+}
+
 export interface FirebaseServices {
   app: FirebaseApp;
   auth: Auth;
@@ -40,7 +55,7 @@ export function loadFirebase(): Promise<FirebaseServices> {
         import('firebase/auth'),
         import('firebase/firestore'),
       ]);
-      const app = getApps()[0] ?? initializeApp(firebaseConfig);
+      const app = getApps()[0] ?? initializeApp({ ...firebaseConfig, authDomain: authDomain() });
       return { app, auth: getAuth(app), db: getFirestore(app) };
     })();
     services.catch(() => {

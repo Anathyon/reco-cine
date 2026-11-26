@@ -7,6 +7,7 @@ const mockConfigured = { value: true };
 const mockAuthCallback: { fn: ((user: unknown) => Promise<void>) | null } = { fn: null };
 const mockPopup = jest.fn();
 const mockRedirect = jest.fn();
+const mockRedirectResult = jest.fn();
 const mockSignOut = jest.fn();
 const mockStartSync = jest.fn();
 const mockToast = jest.fn();
@@ -25,6 +26,7 @@ jest.mock('firebase/auth', () => ({
   },
   signInWithPopup: (...args: unknown[]) => mockPopup(...args),
   signInWithRedirect: (...args: unknown[]) => mockRedirect(...args),
+  getRedirectResult: (...args: unknown[]) => mockRedirectResult(...args),
   signOut: (...args: unknown[]) => mockSignOut(...args),
 }));
 jest.mock('../../lib/favoritesSync', () => ({ startFavoritesSync: (...args: unknown[]) => mockStartSync(...args) }));
@@ -41,6 +43,7 @@ beforeEach(async () => {
   mockConfigured.value = true;
   mockAuthCallback.fn = null;
   mockStartSync.mockResolvedValue({ uploaded: 0, stop });
+  mockRedirectResult.mockResolvedValue(null);
   fav = await import('../favoritesStore');
   auth = await import('../authStore');
   fav.useFavoritesStore.setState({ items: {}, hydrated: true });
@@ -116,6 +119,14 @@ it('falha na sincronização vira aviso, sem derrubar o login', async () => {
   expect(mockToast).toHaveBeenCalledWith('Não foi possível sincronizar sua lista agora.');
 });
 
+it('erro na volta do login pela própria aba vira aviso', async () => {
+  mockRedirectResult.mockRejectedValue({ code: 'auth/unauthorized-domain' });
+  jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  await start();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(mockToast).toHaveBeenCalledWith('Não foi possível entrar. Tente de novo.');
+});
+
 describe('signIn', () => {
   it('usa o popup do Google', async () => {
     mockPopup.mockResolvedValue({});
@@ -134,6 +145,14 @@ describe('signIn', () => {
     mockPopup.mockRejectedValue({ code: 'auth/popup-blocked' });
     await state().signIn();
     expect(mockRedirect).toHaveBeenCalled();
+  });
+
+  it('se o login na própria aba também falhar, mostra aviso em vez de estourar', async () => {
+    mockPopup.mockRejectedValue({ code: 'auth/popup-blocked' });
+    mockRedirect.mockRejectedValue({ code: 'auth/unauthorized-domain' });
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await expect(state().signIn()).resolves.toBeUndefined();
+    expect(mockToast).toHaveBeenCalledWith('Não foi possível entrar. Tente de novo.');
   });
 
   it('outros erros mostram aviso', async () => {

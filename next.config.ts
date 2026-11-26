@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   outputFileTracingRoot: __dirname,
 
+  // Login do Firebase servido pelo próprio domínio do site (ver authDomain em
+  // src/lib/firebase.ts). Sem isso, navegadores que isolam cookies de terceiros
+  // (Brave, Firefox, Safari, Chrome com bloqueio) perdem a sessão ao voltar do Google.
+  async rewrites() {
+    const project = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!project) return [];
+    const origin = `https://${project}.firebaseapp.com`;
+    return [{ source: '/__/auth/:path*', destination: `${origin}/__/auth/:path*` }];
+  },
+
   async headers() {
     return [
       {

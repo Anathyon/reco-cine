@@ -71,7 +71,8 @@ e2e/              testes de ponta a ponta (Playwright) e mocks das APIs
 1. Em [console.firebase.google.com](https://console.firebase.google.com), crie um projeto e adicione um **App da Web**. Copie os valores do `firebaseConfig` para as variáveis `NEXT_PUBLIC_FIREBASE_*`.
 2. **Authentication → Método de login → Google**: ative.
 3. **Authentication → Configurações → Domínios autorizados**: adicione o domínio do site na Vercel (`localhost` já vem incluído).
-4. **Firestore Database**: crie o banco (modo produção) e publique as regras de `firestore.rules`, colando no console (aba *Regras*) ou com `npm run deploy:rules` (precisa do [CLI do Firebase](https://firebase.google.com/docs/cli): `npm i -g firebase-tools` e `firebase login`; funciona no plano gratuito).
+4. **Google Cloud → APIs e serviços → [Credenciais](https://console.cloud.google.com/apis/credentials)** → cliente OAuth *Web client (auto created by Google Service)* → **URIs de redirecionamento autorizados**: adicione `https://SEU-DOMINIO/__/auth/handler`. Em produção o login passa pelo próprio domínio do site (o `next.config.ts` repassa `/__/auth/*` ao Firebase), para não depender de cookies de terceiros, que Brave, Firefox, Safari e o Chrome com bloqueio descartam.
+5. **Firestore Database**: crie o banco (modo produção) e publique as regras de `firestore.rules`, colando no console (aba *Regras*) ou com `npm run deploy:rules` (precisa do [CLI do Firebase](https://firebase.google.com/docs/cli): `npm i -g firebase-tools` e `firebase login`; funciona no plano gratuito).
 
 As chaves `NEXT_PUBLIC_FIREBASE_*` são públicas por natureza (identificam o projeto); quem protege os dados são as regras do Firestore.
 

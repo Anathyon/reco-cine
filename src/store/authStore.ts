@@ -120,8 +120,17 @@ export async function initAuth() {
 
   try {
     const services = await loadFirebase();
-    const { onAuthStateChanged } = await import('firebase/auth');
+    const { onAuthStateChanged, getRedirectResult } = await import('firebase/auth');
     await waitForFavorites();
+
+    // Volta do login feito na própria aba: o usuário chega pelo onAuthStateChanged;
+    // aqui só aparecem os erros, que de outro modo passariam em silêncio.
+    getRedirectResult(services.auth).catch((err) => {
+      const code = errorCode(err);
+      if (CANCELLED.has(code)) return;
+      console.error('[auth] Falha ao voltar do login:', code);
+      toast('Não foi possível entrar. Tente de novo.');
+    });
 
     // undefined = ainda não sabemos; null = ninguém logado.
     let current: string | null | undefined = undefined;
